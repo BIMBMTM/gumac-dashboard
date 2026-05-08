@@ -242,7 +242,25 @@ const GROUP_INFO = {
     content: '🚨 Chuẩn bị campaign relaunch: storytelling "thay đổi", PR grand opening, mời báo chí địa phương. Sau khi fix vận hành mới làm content. KHÔNG content gì lúc store đang yếu — sẽ tổn thương thương hiệu.' },
 };
 
-const DEFAULT_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT5MDcm_erqg5Rne8BXEoQtN_eJPpcK6iI9GcT8MvTkp7QH8eOOmI3FtMrJ3c20kupcAMVik6jEAw-H/pub?gid=0&single=true&output=csv';
+const ENCRYPTED_CSV = 'aIlZQ+yO70+7FOxXeV963Eh7HW2j0nY/QluVhQ6RINJH7fhi8Oagl3UE+o3qRkaxKadbPT1k4FXPFeajrxJzWftNUBiwWixyIBm0Kb32lanHhisxQfjDB9r2I3FQSxashrClx59PC3P1QTfLZEb/b31rXVkPUTo/9ncJ1/xDZJjKThRaF2eMK0utovjPHeBqWAAVcIfMRLo5NAuNayOfd+jJbTty8le+ZdvL6+usCNp0XunV3bf2jHZK9y4=';
+
+async function decryptCsvUrl(password) {
+  try {
+    const enc = new TextEncoder();
+    const keyMaterial = await crypto.subtle.digest('SHA-256', enc.encode(password));
+    const key = await crypto.subtle.importKey('raw', keyMaterial, { name: 'AES-GCM' }, false, ['decrypt']);
+    const data = Uint8Array.from(atob(ENCRYPTED_CSV), c => c.charCodeAt(0));
+    const iv = data.slice(0, 12);
+    const authTag = data.slice(12, 28);
+    const ciphertext = data.slice(28);
+    const combined = new Uint8Array(ciphertext.length + authTag.length);
+    combined.set(ciphertext); combined.set(authTag, ciphertext.length);
+    const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, combined);
+    return new TextDecoder().decode(decrypted);
+  } catch (e) {
+    return null;
+  }
+}
 
 const getDefaultCsvUrl = () => {
   const params = new URLSearchParams(window.location.search);
@@ -250,7 +268,7 @@ const getDefaultCsvUrl = () => {
   if (fromQuery) return decodeURIComponent(fromQuery);
   const fromHash = window.location.hash.replace(/^#/, '');
   if (fromHash.startsWith('http')) return decodeURIComponent(fromHash);
-  return DEFAULT_CSV_URL;
+  return '';
 };
 
 
@@ -367,11 +385,17 @@ function LoginGate({ onSuccess }) {
     try {
       const inputHash = await sha256(trimmed);
       if (inputHash === PASSWORD_HASH) {
+        const decryptedUrl = await decryptCsvUrl(trimmed);
+        if (!decryptedUrl) {
+          setErr('Lỗi giải mã dữ liệu nguồn.');
+          setChecking(false);
+          return;
+        }
         try {
           const expiry = Date.now() + SESSION_HOURS * 3600 * 1000;
-          sessionStorage.setItem(SESSION_KEY, JSON.stringify({ ok: true, expiry }));
+          sessionStorage.setItem(SESSION_KEY, JSON.stringify({ ok: true, expiry, k: trimmed }));
         } catch {}
-        onSuccess();
+        onSuccess(decryptedUrl);
         return;
       }
       setErr('Mật khẩu không đúng.');
@@ -444,22 +468,46 @@ function LoginGate({ onSuccess }) {
 
 
 function App() {
-  const [authed, setAuthed] = useState(() => {
-    try {
-      const s = sessionStorage.getItem(SESSION_KEY);
-      if (!s) return false;
-      const { ok, expiry } = JSON.parse(s);
-      return ok && expiry > Date.now();
-    } catch { return false; }
-  });
+  const [authed, setAuthed] = useState(false);
+  const [csvFromLogin, setCsvFromLogin] = useState('');
+  const [restoring, setRestoring] = useState(true);
 
-  if (!authed) return <LoginGate onSuccess={() => setAuthed(true)} />;
-  return <DashboardMain onLogout={() => { sessionStorage.removeItem(SESSION_KEY); setAuthed(false); }} />;
+  // Restore session: nếu còn hạn thì cần decrypt URL lại bằng password lưu trong session
+  useEffect(() => {
+    (async () => {
+      try {
+        const s = sessionStorage.getItem(SESSION_KEY);
+        if (!s) { setRestoring(false); return; }
+        const { ok, expiry, k } = JSON.parse(s);
+        if (!ok || expiry <= Date.now() || !k) {
+          sessionStorage.removeItem(SESSION_KEY);
+          setRestoring(false);
+          return;
+        }
+        const url = await decryptCsvUrl(k);
+        if (url) {
+          setCsvFromLogin(url);
+          setAuthed(true);
+        } else {
+          sessionStorage.removeItem(SESSION_KEY);
+        }
+      } catch {
+        sessionStorage.removeItem(SESSION_KEY);
+      } finally {
+        setRestoring(false);
+      }
+    })();
+  }, []);
+
+  if (restoring) return <div className="min-h-screen flex items-center justify-center"><div className="text-slate-400 text-sm">Đang khởi tạo...</div></div>;
+
+  if (!authed) return <LoginGate onSuccess={(url) => { setCsvFromLogin(url); setAuthed(true); }} />;
+  return <DashboardMain initialCsvUrl={csvFromLogin} onLogout={() => { sessionStorage.removeItem(SESSION_KEY); setCsvFromLogin(''); setAuthed(false); }} />;
 }
 
-function DashboardMain({ onLogout }) {
+function DashboardMain({ initialCsvUrl, onLogout }) {
   const [rawData, setRawData] = useState([]);
-  const [csvUrl, setCsvUrl] = useState(getDefaultCsvUrl());
+  const [csvUrl, setCsvUrl] = useState(initialCsvUrl || getDefaultCsvUrl());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [usingSample, setUsingSample] = useState(true);
