@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GUMAC Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
+<script src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
+<script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
+<style>
+  :root {
+    --bg-base: #f7f8fb;
+    --surface: #ffffff;
+    --border-soft: rgba(15, 23, 42, 0.06);
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-tertiary: #94a3b8;
+    --pastel-blue: #c7dafc;
+    --pastel-blue-strong: #93b6f5;
+    --pastel-blue-deep: #5b8def;
+    --pastel-purple: #d9c8f7;
+    --pastel-purple-strong: #b89cf0;
+    --pastel-pink: #f7c8dc;
+    --pastel-pink-strong: #ed9ebe;
+    --pastel-green: #b9e6c9;
+    --pastel-green-strong: #6dc88a;
+    --pastel-amber: #f8dcae;
+    --pastel-red-strong: #e57878;
+  }
+  * { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    margin: 0;
+    color: var(--text-primary);
+    background: var(--bg-base);
+    background-image:
+      radial-gradient(at 8% 0%, rgba(199, 218, 252, 0.45) 0px, transparent 50%),
+      radial-gradient(at 92% 6%, rgba(247, 200, 220, 0.35) 0px, transparent 50%),
+      radial-gradient(at 50% 100%, rgba(217, 200, 247, 0.30) 0px, transparent 50%);
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+  .display-font { font-family: 'Plus Jakarta Sans', sans-serif; letter-spacing: -0.022em; }
+  .ticker { font-variant-numeric: tabular-nums; font-feature-settings: 'tnum'; }
+  .surface {
+    background: var(--surface);
+    border-radius: 24px;
+    border: 1px solid var(--border-soft);
+    box-shadow: 0 1px 2px rgba(15,23,42,0.03), 0 8px 24px -12px rgba(15,23,42,0.06);
+  }
+  .surface-elevated {
+    background: var(--surface);
+    border-radius: 28px;
+    border: 1px solid var(--border-soft);
+    box-shadow: 0 1px 2px rgba(15,23,42,0.03), 0 12px 40px -16px rgba(15,23,42,0.10), 0 2px 8px -2px rgba(15,23,42,0.04);
+  }
+  .glass {
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+  }
+  .pill { border-radius: 9999px; padding: 6px 12px; font-size: 11px; font-weight: 600; letter-spacing: 0.02em; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .fadeup { animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) backwards; }
+  @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+  .shimmer-text {
+    background: linear-gradient(90deg, #5b8def, #b89cf0, #ed9ebe, #b89cf0, #5b8def);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: shimmer 6s linear infinite;
+  }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(15,23,42,0.1); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(15,23,42,0.2); }
+  .recharts-cartesian-grid-horizontal line, .recharts-cartesian-grid-vertical line { stroke: rgba(15,23,42,0.05); }
+  .recharts-tooltip-wrapper { outline: none !important; }
+  .login-bg {
+    background:
+      radial-gradient(at 20% 30%, rgba(147, 182, 245, 0.5) 0px, transparent 50%),
+      radial-gradient(at 80% 70%, rgba(237, 158, 190, 0.45) 0px, transparent 50%),
+      radial-gradient(at 50% 50%, rgba(184, 156, 240, 0.4) 0px, transparent 50%),
+      #f7f8fb;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #5b8def 0%, #b89cf0 100%);
+    color: white;
+    border-radius: 14px;
+    padding: 12px 20px;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 14px rgba(91, 141, 239, 0.3);
+    border: none;
+    cursor: pointer;
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(91, 141, 239, 0.4); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .input-soft {
+    background: rgba(247, 248, 251, 0.8);
+    border: 1px solid rgba(15, 23, 42, 0.06);
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    color: var(--text-primary);
+    width: 100%;
+    outline: none;
+  }
+  .input-soft:focus { background: white; border-color: var(--pastel-blue-deep); box-shadow: 0 0 0 4px rgba(91,141,239,0.08); }
+  .input-soft::placeholder { color: var(--text-tertiary); }
+  .spin { animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
+  .shake { animation: shake 0.4s ease-in-out; }
+</style>
+</head>
+<body>
+<div id="root"><div style="text-align:center;padding:60px;color:#64748b;font-family:sans-serif;">Đang tải dashboard...</div></div>
+
+<script type="text/babel" data-presets="react">
+const { useState, useMemo, useEffect, useRef } = React;
+const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area, AreaChart } = Recharts;
+
+// ============ ICONS ============
+const Icon = ({ d, size = 16, className = '', stroke = 2 }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" className={className} style={{display:'inline-block',verticalAlign:'middle'}} dangerouslySetInnerHTML={{__html: d}} />
+);
+const IconUp = (p) => <Icon {...p} d='<polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>' />;
+const IconDown = (p) => <Icon {...p} d='<polyline points="22 17 13.5 8.5 8.5 13.5 2 7"/><polyline points="16 17 22 17 22 11"/>' />;
+const IconMinus = (p) => <Icon {...p} d='<line x1="5" y1="12" x2="19" y2="12"/>' />;
+const IconRefresh = (p) => <Icon {...p} d='<polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>' />;
+const IconUpload = (p) => <Icon {...p} d='<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>' />;
+const IconDownload = (p) => <Icon {...p} d='<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>' />;
+const IconFilter = (p) => <Icon {...p} d='<polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>' />;
+const IconAlert = (p) => <Icon {...p} d='<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>' />;
+const IconCheck = (p) => <Icon {...p} d='<polyline points="20 6 9 17 4 12"/>' />;
+const IconLock = (p) => <Icon {...p} d='<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>' />;
+const IconEye = (p) => <Icon {...p} d='<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>' />;
+const IconEyeOff = (p) => <Icon {...p} d='<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>' />;
+const IconShare = (p) => <Icon {...p} d='<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>' />;
+const IconSparkles = (p) => <Icon {...p} d='<path d="M12 3l1.88 5.76a2 2 0 0 0 1.36 1.36L21 12l-5.76 1.88a2 2 0 0 0-1.36 1.36L12 21l-1.88-5.76a2 2 0 0 0-1.36-1.36L3 12l5.76-1.88a2 2 0 0 0 1.36-1.36L12 3z"/>' />;
+const IconChart = (p) => <Icon {...p} d='<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>' />;
+const IconCalendar = (p) => <Icon {...p} d='<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>' />;
+const IconTable = (p) => <Icon {...p} d='<rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/>' />;
+const IconLogout = (p) => <Icon {...p} d='<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>' />;
+
+// ============ HELPERS ============
+const parseNumber = (v) => {
+  if (v === null || v === undefined || v === '') return 0;
+  if (typeof v === 'number') return v;
+  let s = String(v).trim();
+  if (!s) return 0;
+  s = s.replace(/[₫\sVNDđ%]/gi, '');
+  if (s.includes('.') && s.includes(',')) { s = s.replace(/\./g, '').replace(',', '.'); }
+  else if (s.includes('.') && !s.includes(',')) {
+    const parts = s.split('.');
+    if (parts.length > 2 || (parts.length === 2 && parts[1].length === 3)) s = s.replace(/\./g, '');
+  } else if (s.includes(',')) s = s.replace(',', '.');
+  const n = parseFloat(s);
+  return isNaN(n) ? 0 : n;
+};
+const parseDate = (v) => {
+  if (!v) return null;
+  if (v instanceof Date) return v;
+  const s = String(v).trim();
+  const m1 = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+  if (m1) { let [,d,m,y]=m1; if(y.length===2)y='20'+y; return new Date(parseInt(y),parseInt(m)-1,parseInt(d)); }
+  const m2 = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (m2) return new Date(parseInt(m2[1]),parseInt(m2[2])-1,parseInt(m2[3]));
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? null : d;
+};
+const formatNumber = (n, dec=0) => (n==null||isNaN(n))?'0':n.toLocaleString('vi-VN',{maximumFractionDigits:dec,minimumFractionDigits:dec});
+const formatCurrency = (n) => {
+  if (!n) return '0 ₫';
+  if (Math.abs(n) >= 1e9) return (n/1e9).toFixed(2)+' tỷ';
+  if (Math.abs(n) >= 1e6) return (n/1e6).toFixed(1)+' tr';
+  if (Math.abs(n) >= 1e3) return (n/1e3).toFixed(0)+'k';
+  return formatNumber(n);
+};
+const formatDateKey = (d) => d ? `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}` : '';
+const formatDateFull = (d) => d ? `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()}` : '';
+const pctChange = (cur, base) => (!base||base===0)?null:((cur-base)/base)*100;
+
+const getStoreGroup = (t,c,a) => {
+  if (t&&c&&a) return 'B1'; if (t&&c&&!a) return 'B2'; if (t&&!c&&a) return 'B3'; if (t&&!c&&!a) return 'B4';
+  if (!t&&c&&a) return 'B5'; if (!t&&c&&!a) return 'B6'; if (!t&&!c&&a) return 'B7'; return 'B8';
+};
+
+const GROUP_INFO = {
+  B1: { color:'#6dc88a', bg:'#e8f5ee', border:'#b9e6c9', label:'Xuất sắc', cond:'Traffic ✓ • CRV ✓ • ATV ✓', action:'Duy trì & nhân rộng mô hình. Khen thưởng, làm case study cho các chi nhánh khác học hỏi.' },
+  B2: { color:'#d4a849', bg:'#fdf6e3', border:'#f8dcae', label:'Tốt - thiếu ATV', cond:'Traffic ✓ • CRV ✓ • ATV ✗', action:'Đào tạo upsell/cross-sell, gợi ý combo & sản phẩm cao giá. Trưng bày sản phẩm bổ sung tại quầy thu ngân.' },
+  B3: { color:'#e57878', bg:'#fdecec', border:'#f5b9b9', label:'Kém - chốt đơn yếu', cond:'Traffic ✓ • CRV ✗ • ATV ✓', action:'Tập trung kỹ năng tư vấn & chốt đơn cho NV. Rà soát quy trình bán hàng, kịch bản tư vấn, thái độ phục vụ.' },
+  B4: { color:'#e57878', bg:'#fdecec', border:'#f5b9b9', label:'Kém - chuyển đổi yếu', cond:'Traffic ✓ • CRV ✗ • ATV ✗', action:'Có khách nhưng không bán được hàng. Audit toàn diện: nhân sự, sản phẩm trưng bày, giá, kỹ năng bán hàng. Ưu tiên xử lý.' },
+  B5: { color:'#d4a849', bg:'#fdf6e3', border:'#f8dcae', label:'Tốt - thiếu Traffic', cond:'Traffic ✗ • CRV ✓ • ATV ✓', action:'Nội tại tốt nhưng thiếu khách. Tăng marketing local, khuyến mãi hút khách, review vị trí - biển hiệu - giờ mở cửa.' },
+  B6: { color:'#e57878', bg:'#fdecec', border:'#f5b9b9', label:'Kém - 2 mặt yếu', cond:'Traffic ✗ • CRV ✓ • ATV ✗', action:'Cần kéo khách + tăng giá trị đơn. Triển khai chương trình combo, mua kèm; song song chạy ads/khuyến mãi local.' },
+  B7: { color:'#e57878', bg:'#fdecec', border:'#f5b9b9', label:'Kém - chỉ bán giá trị cao', cond:'Traffic ✗ • CRV ✗ • ATV ✓', action:'Lượng khách & tỷ lệ chốt đều thấp. Rà soát tổng thể marketing & vận hành, có thể cần thay đổi nhân sự quản lý.' },
+  B8: { color:'#c95757', bg:'#fce0e0', border:'#e57878', label:'Báo động - cần can thiệp', cond:'Traffic ✗ • CRV ✗ • ATV ✗', action:'🚨 KHẨN CẤP. Cần kế hoạch xử lý đặc biệt: thay quản lý, tái đào tạo nhân viên, đánh giá khả năng đóng cửa hoặc tái cấu trúc.' },
+};
+
+const DEFAULT_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT5MDcm_erqg5Rne8BXEoQtN_eJPpcK6iI9GcT8MvTkp7QH8eOOmI3FtMrJ3c20kupcAMVik6jEAw-H/pub?gid=0&single=true&output=csv';
+
+const getDefaultCsvUrl = () => {
+  const params = new URLSearchParams(window.location.search);
+  const fromQuery = params.get('csv');
+  if (fromQuery) return decodeURIComponent(fromQuery);
+  const fromHash = window.location.hash.replace(/^#/, '');
+  if (fromHash.startsWith('http')) return decodeURIComponent(fromHash);
+  return DEFAULT_CSV_URL;
+};
+
+// ============ SAMPLE DATA ============
+const generateSampleData = () => {
+  const branches = [
+    { name:'CN Quận 1', region:'TP.HCM', type:'Flagship' },
+    { name:'CN Quận 7', region:'TP.HCM', type:'Standard' },
+    { name:'CN Thủ Đức', region:'TP.HCM', type:'Standard' },
+    { name:'CN Hà Đông', region:'Hà Nội', type:'Flagship' },
+    { name:'CN Cầu Giấy', region:'Hà Nội', type:'Standard' },
+    { name:'CN Hải Châu', region:'Đà Nẵng', type:'Standard' },
+    { name:'CN Sơn Trà', region:'Đà Nẵng', type:'Mini' },
+    { name:'CN Ninh Kiều', region:'Cần Thơ', type:'Mini' },
+  ];
+  const data = [];
+  const today = new Date();
+  for (let i = 60; i >= 0; i--) {
+    const d = new Date(today); d.setDate(today.getDate() - i);
+    branches.forEach((b, idx) => {
+      const dthuTarget = 10000000 + idx*2000000;
+      const donTarget = 50 + idx*5;
+      const spTarget = donTarget*1.5;
+      const trafficTarget = donTarget*4;
+      const atvTarget = dthuTarget/donTarget;
+      const dthu = Math.round(dthuTarget*(0.7+Math.random()*0.6));
+      const don = Math.round(donTarget*(0.7+Math.random()*0.6));
+      const sp = Math.round(don*(1.2+Math.random()*0.6));
+      const traffic = Math.round(don*(3+Math.random()*2));
+      data.push({
+        'NGÀY': `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()}`,
+        'TÊN CHI NHÁNH': b.name,
+        'DTHU MỤC TIÊU': dthuTarget, 'ĐƠN HÀNG MỤC TIÊU': donTarget, 'SỐ SẢN PHẨM MỤC TIÊU': spTarget,
+        'TRAFFIC MỤC TIÊU': trafficTarget, 'ATV MỤC TIÊU': Math.round(atvTarget), 'UPT MỤC TIÊU': 1.5, 'CRV MỤC TIÊU': 25,
+        'DTHU đạt': dthu, 'ĐƠN HÀNG đạt': don, 'SẢN PHẨM đạt': sp,
+        'TRAFFIC Đạt': traffic, 'ATV đạt': don?Math.round(dthu/don):0,
+        'UPT đạt': don?(sp/don).toFixed(2):0, 'CRV đạt': traffic?(don/traffic*100).toFixed(2):0,
+        'Vùng': b.region, 'Loại cửa hàng': b.type,
+      });
+    });
+  }
+  return data;
+};
+
+const findKey = (row, candidates) => {
+  const keys = Object.keys(row);
+  for (const c of candidates) {
+    const target = c.toLowerCase().replace(/\s+/g,' ').trim();
+    const k = keys.find(k => k.toLowerCase().replace(/\s+/g,' ').trim() === target);
+    if (k) return k;
+  }
+  for (const c of candidates) {
+    const target = c.toLowerCase().replace(/\s+/g,' ').trim();
+    const k = keys.find(k => k.toLowerCase().replace(/\s+/g,' ').trim().includes(target));
+    if (k) return k;
+  }
+  return null;
+};
+
+const normalizeRow = (row) => {
+  const k = (cands) => findKey(row, cands);
+  return {
+    date: parseDate(row[k(['NGÀY','NGAY','Date'])]),
+    branch: (row[k(['TÊN CHI NHÁNH','CHI NHÁNH','Branch'])]||'').toString().trim(),
+    region: (row[k(['Vùng','Vung','Region'])]||'N/A').toString().trim(),
+    storeType: (row[k(['Loại cửa hàng','Loai cua hang','Store type'])]||'N/A').toString().trim(),
+    dthuT: parseNumber(row[k(['DTHU MỤC TIÊU','DOANH THU MỤC TIÊU'])]),
+    donT: parseNumber(row[k(['ĐƠN HÀNG MỤC TIÊU','DON HANG MUC TIEU'])]),
+    spT: parseNumber(row[k(['SỐ SẢN PHẨM MỤC TIÊU','SẢN PHẨM MỤC TIÊU','SAN PHAM MUC TIEU'])]),
+    trafficT: parseNumber(row[k(['TRAFFIC MỤC TIÊU','TRAFFIC MUC TIEU'])]),
+    atvT: parseNumber(row[k(['ATV MỤC TIÊU','ATV MUC TIEU'])]),
+    uptT: parseNumber(row[k(['UPT MỤC TIÊU','UPT MUC TIEU'])]),
+    crvT: parseNumber(row[k(['CRV MỤC TIÊU','CR MỤC TIÊU'])]),
+    dthuA: parseNumber(row[k(['DTHU đạt','DTHU dat','DOANH THU đạt'])]),
+    donA: parseNumber(row[k(['ĐƠN HÀNG đạt','DON HANG dat'])]),
+    spA: parseNumber(row[k(['SẢN PHẨM đạt','SAN PHAM dat'])]),
+    trafficA: parseNumber(row[k(['TRAFFIC Đạt','TRAFFIC đạt','TRAFFIC dat'])]),
+    atvA: parseNumber(row[k(['ATV đạt','ATV dat'])]),
+    uptA: parseNumber(row[k(['UPT đạt','UPT dat'])]),
+    crvA: parseNumber(row[k(['CRV đạt','CR đạt','CRV dat'])]),
+  };
+};
+
+// ============ LOGIN ============
+const CORRECT_PASSWORD = 'GUMAC2026123456987';
+const SESSION_KEY = 'gumac_dash_auth';
+const SESSION_HOURS = 8;
+
+function LoginGate({ onSuccess }) {
+  const [pwd, setPwd] = useState('');
+  const [showPwd, setShowPwd] = useState(false);
+  const [err, setErr] = useState('');
+  const [shake, setShake] = useState(false);
+  const inputRef = useRef(null);
+
+  useEffect(() => { inputRef.current && inputRef.current.focus(); }, []);
+
+  const submit = (e) => {
+    if (e) e.preventDefault();
+    const trimmed = pwd.trim();
+    if (trimmed === CORRECT_PASSWORD) {
+      try {
+        const expiry = Date.now() + SESSION_HOURS * 3600 * 1000;
+        sessionStorage.setItem(SESSION_KEY, JSON.stringify({ ok: true, expiry }));
+      } catch {}
+      onSuccess();
+    } else {
+      const expectedLen = CORRECT_PASSWORD.length;
+      const actualLen = trimmed.length;
+      let msg = 'Mật khẩu không đúng.';
+      if (actualLen === 0) msg = 'Vui lòng nhập mật khẩu.';
+      else if (actualLen !== expectedLen) msg = `Mật khẩu sai (cần ${expectedLen} ký tự, bạn nhập ${actualLen}).`;
+      setErr(msg);
+      setShake(true);
+      setTimeout(() => setShake(false), 500);
+      inputRef.current && inputRef.current.focus();
+      inputRef.current && inputRef.current.select();
+    }
+  };
+
+  return (
+    <div className="login-bg min-h-screen flex items-center justify-center p-6">
+      <div className={`w-full max-w-md ${shake ? 'shake' : ''}`}>
+        <div className="surface-elevated p-8 fadeup glass">
+          <div className="flex flex-col items-center mb-8">
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4" style={{background:'linear-gradient(135deg, #c7dafc 0%, #d9c8f7 50%, #f7c8dc 100%)', boxShadow:'0 8px 24px rgba(184,156,240,0.3)'}}>
+              <IconLock size={28} className="text-white" stroke={2.5}/>
+            </div>
+            <h1 className="display-font text-2xl font-bold mb-1.5 shimmer-text">GUMAC Dashboard</h1>
+            <p className="text-sm text-slate-500 text-center">Vui lòng nhập mật khẩu để truy cập</p>
+          </div>
+
+          <form onSubmit={submit} className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-2 uppercase tracking-wider">Mật khẩu</label>
+              <div className="relative">
+                <input
+                  ref={inputRef}
+                  type={showPwd ? 'text' : 'password'}
+                  value={pwd}
+                  onChange={(e) => { setPwd(e.target.value); setErr(''); }}
+                  className="input-soft pr-14 text-base"
+                  placeholder="Nhập mật khẩu..."
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPwd(!showPwd)}
+                  title={showPwd ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-lg flex items-center justify-center text-slate-400 hover:text-blue-500 hover:bg-blue-50 transition"
+                  style={{background:'transparent', border:'none', cursor:'pointer'}}
+                >
+                  {showPwd ? <IconEyeOff size={18}/> : <IconEye size={18}/>}
+                </button>
+              </div>
+              {err && (
+                <div className="mt-2 flex items-center gap-1.5 text-xs text-rose-500">
+                  <IconAlert size={13}/> {err}
+                </div>
+              )}
+            </div>
+
+            <button type="submit" className="btn-primary w-full flex items-center justify-center gap-2">
+              <IconSparkles size={16}/> Truy cập Dashboard
+            </button>
+          </form>
+
+          <div className="mt-8 pt-6 border-t border-slate-100 text-center">
+            <p className="text-[11px] text-slate-400">Phiên đăng nhập tồn tại trong {SESSION_HOURS} giờ</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============ MAIN ============
+function App() {
+  const [authed, setAuthed] = useState(() => {
+    try {
+      const s = sessionStorage.getItem(SESSION_KEY);
+      if (!s) return false;
+      const { ok, expiry } = JSON.parse(s);
+      return ok && expiry > Date.now();
+    } catch { return false; }
+  });
+
+  if (!authed) return <LoginGate onSuccess={() => setAuthed(true)} />;
+  return <DashboardMain onLogout={() => { sessionStorage.removeItem(SESSION_KEY); setAuthed(false); }} />;
+}
+
+function DashboardMain({ onLogout }) {
+  const [rawData, setRawData] = useState([]);
+  const [csvUrl, setCsvUrl] = useState(getDefaultCsvUrl());
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [usingSample, setUsingSample] = useState(true);
+  const [filterRegion, setFilterRegion] = useState('all');
+  const [filterStoreType, setFilterStoreType] = useState('all');
+  const [filterBranch, setFilterBranch] = useState('all');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [dateRangePreset, setDateRangePreset] = useState('this_month');
+  const [dailyTablePage, setDailyTablePage] = useState(0);
+
+  useEffect(() => {
+    const sample = generateSampleData().map(normalizeRow);
+    setRawData(sample);
+    if (csvUrl) setTimeout(() => loadFromCsv(csvUrl), 500);
+  }, []);
+
+  const loadFromCsv = async (urlOverride) => {
+    const useUrl = urlOverride || csvUrl;
+    if (!useUrl.trim()) { setError('Vui lòng nhập link CSV'); return; }
+    setLoading(true); setError('');
+    const attempts = [
+      { name:'direct', url:useUrl },
+      { name:'corsproxy.io', url:`https://corsproxy.io/?${encodeURIComponent(useUrl)}` },
+      { name:'allorigins', url:`https://api.allorigins.win/raw?url=${encodeURIComponent(useUrl)}` },
+      { name:'codetabs', url:`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(useUrl)}` },
+    ];
+    let lastErr = null;
+    for (const a of attempts) {
+      try {
+        const res = await fetch(a.url, { redirect:'follow' });
+        if (!res.ok) { lastErr = new Error(`HTTP ${res.status}`); continue; }
+        const text = await res.text();
+        if (!text || text.length < 10) { lastErr = new Error('Phản hồi rỗng'); continue; }
+        if (text.trim().toLowerCase().startsWith('<!doctype') || text.trim().toLowerCase().startsWith('<html')) {
+          lastErr = new Error('Nhận về HTML thay vì CSV. Sheet có thể chưa publish.'); continue;
+        }
+        const parsed = Papa.parse(text, { header:true, skipEmptyLines:true });
+        const normalized = parsed.data.map(normalizeRow).filter(r => r.date && r.branch);
+        if (normalized.length === 0) { lastErr = new Error('Không nhận diện được cột'); continue; }
+        setRawData(normalized); setUsingSample(false);
+        setError(`✓ Đã tải ${normalized.length} dòng qua ${a.name}`);
+        setLoading(false); return;
+      } catch (e) { lastErr = e; }
+    }
+    setError(`Không kết nối được. Lỗi: ${lastErr ? lastErr.message : 'unknown'}. Thử Upload CSV.`);
+    setLoading(false);
+  };
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    setLoading(true);
+    Papa.parse(file, {
+      header:true, skipEmptyLines:true,
+      complete: (res) => {
+        const normalized = res.data.map(normalizeRow).filter(r => r.date && r.branch);
+        if (normalized.length === 0) setError('File không có dữ liệu hợp lệ');
+        else { setRawData(normalized); setUsingSample(false); setError(`✓ Đã tải ${normalized.length} dòng từ file`); }
+        setLoading(false);
+      },
+      error: (err) => { setError('Lỗi đọc file: ' + err.message); setLoading(false); }
+    });
+  };
+
+  const toInputDate = (d) => d ? `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}` : '';
+
+  useEffect(() => {
+    if (rawData.length === 0) return;
+    const dates = rawData.map(r => r.date.getTime());
+    const maxD = new Date(Math.max(...dates));
+    const minD = new Date(Math.min(...dates));
+    if (dateRangePreset === 'custom') return;
+    let from, to;
+    if (dateRangePreset === 'this_month') { from = new Date(maxD.getFullYear(), maxD.getMonth(), 1); to = maxD; }
+    else if (dateRangePreset === 'last_7') { to = maxD; from = new Date(maxD); from.setDate(maxD.getDate()-6); }
+    else if (dateRangePreset === 'last_30') { to = maxD; from = new Date(maxD); from.setDate(maxD.getDate()-29); }
+    else if (dateRangePreset === 'last_month') { from = new Date(maxD.getFullYear(), maxD.getMonth()-1, 1); to = new Date(maxD.getFullYear(), maxD.getMonth(), 0); }
+    else if (dateRangePreset === 'all') { from = minD; to = maxD; }
+    setDateFrom(toInputDate(from)); setDateTo(toInputDate(to));
+  }, [rawData, dateRangePreset]);
+
+  const { currentData, prevData, dateRange, prevRange } = useMemo(() => {
+    if (rawData.length === 0 || !dateFrom || !dateTo) return { currentData:[], prevData:[], dateRange:null, prevRange:null };
+    const curStart = new Date(dateFrom + 'T00:00:00');
+    const curEnd = new Date(dateTo + 'T23:59:59');
+    if (isNaN(curStart) || isNaN(curEnd)) return { currentData:[], prevData:[], dateRange:null, prevRange:null };
+    const prevStart = new Date(curStart); prevStart.setMonth(prevStart.getMonth()-1);
+    const prevEnd = new Date(curEnd); prevEnd.setMonth(prevEnd.getMonth()-1);
+    const cur = rawData.filter(r => r.date >= curStart && r.date <= curEnd);
+    const prev = rawData.filter(r => r.date >= prevStart && r.date <= prevEnd);
+    return { currentData:cur, prevData:prev, dateRange:[curStart,curEnd], prevRange:[prevStart,prevEnd] };
+  }, [rawData, dateFrom, dateTo]);
+
+  const regions = useMemo(() => [...new Set(rawData.map(r => r.region))].filter(Boolean).sort(), [rawData]);
+  const storeTypes = useMemo(() => [...new Set(rawData.map(r => r.storeType))].filter(Boolean).sort(), [rawData]);
+  const branches = useMemo(() => {
+    let list = rawData;
+    if (filterRegion !== 'all') list = list.filter(r => r.region === filterRegion);
+    if (filterStoreType !== 'all') list = list.filter(r => r.storeType === filterStoreType);
+    return [...new Set(list.map(r => r.branch))].filter(Boolean).sort();
+  }, [rawData, filterRegion, filterStoreType]);
+
+  const applyFilters = (data) => data.filter(r => {
+    if (filterRegion !== 'all' && r.region !== filterRegion) return false;
+    if (filterStoreType !== 'all' && r.storeType !== filterStoreType) return false;
+    if (filterBranch !== 'all' && r.branch !== filterBranch) return false;
+    return true;
+  });
+
+  const filtered = useMemo(() => applyFilters(currentData), [currentData, filterRegion, filterStoreType, filterBranch]);
+  const filteredPrev = useMemo(() => applyFilters(prevData), [prevData, filterRegion, filterStoreType, filterBranch]);
+
+  const aggregate = (data) => {
+    const a = { dthuT:0, donT:0, spT:0, trafficT:0, dthuA:0, donA:0, spA:0, trafficA:0, count:data.length };
+    data.forEach(r => {
+      a.dthuT += r.dthuT; a.donT += r.donT; a.spT += r.spT; a.trafficT += r.trafficT;
+      a.dthuA += r.dthuA; a.donA += r.donA; a.spA += r.spA; a.trafficA += r.trafficA;
+    });
+    a.atvT = a.donT ? a.dthuT/a.donT : 0; a.uptT = a.donT ? a.spT/a.donT : 0; a.crvT = a.trafficT ? (a.donT/a.trafficT)*100 : 0;
+    a.atvA = a.donA ? a.dthuA/a.donA : 0; a.uptA = a.donA ? a.spA/a.donA : 0; a.crvA = a.trafficA ? (a.donA/a.trafficA)*100 : 0;
+    return a;
+  };
+
+  const cur = useMemo(() => aggregate(filtered), [filtered]);
+  const prev = useMemo(() => aggregate(filteredPrev), [filteredPrev]);
+
+  const compareTable = useMemo(() => {
+    const fmt = (k,v) => { if(k==='dthu'||k==='atv') return formatCurrency(v); if(k==='crv') return formatNumber(v,2)+'%'; if(k==='upt') return formatNumber(v,2); return formatNumber(v); };
+    const metrics = [
+      { k:'dthu', label:'Doanh thu', a:cur.dthuA, t:cur.dthuT, pa:prev.dthuA },
+      { k:'don', label:'Đơn hàng', a:cur.donA, t:cur.donT, pa:prev.donA },
+      { k:'sp', label:'Sản phẩm', a:cur.spA, t:cur.spT, pa:prev.spA },
+      { k:'traffic', label:'Traffic', a:cur.trafficA, t:cur.trafficT, pa:prev.trafficA },
+      { k:'atv', label:'ATV', a:cur.atvA, t:cur.atvT, pa:prev.atvA },
+      { k:'upt', label:'UPT', a:cur.uptA, t:cur.uptT, pa:prev.uptA },
+      { k:'crv', label:'CRV (%)', a:cur.crvA, t:cur.crvT, pa:prev.crvA },
+    ];
+    return metrics.map(m => ({ ...m, actDisplay:fmt(m.k,m.a), tgtDisplay:fmt(m.k,m.t), prevDisplay:fmt(m.k,m.pa),
+      vsTarget:pctChange(m.a,m.t), vsPrev:pctChange(m.a,m.pa), pctOfTarget:m.t?(m.a/m.t)*100:null }));
+  }, [cur, prev]);
+
+  // Daily aggregate cho biểu đồ và bảng chi tiết
+  const dailyAggregate = useMemo(() => {
+    const map = new Map();
+    filtered.forEach(r => {
+      const key = r.date.toISOString().slice(0,10);
+      if (!map.has(key)) map.set(key, { date:r.date, dthuA:0, donA:0, spA:0, trafficA:0, dthuT:0, donT:0, spT:0, trafficT:0, count:0 });
+      const e = map.get(key);
+      e.dthuA += r.dthuA; e.donA += r.donA; e.spA += r.spA; e.trafficA += r.trafficA;
+      e.dthuT += r.dthuT; e.donT += r.donT; e.spT += r.spT; e.trafficT += r.trafficT;
+      e.count += 1;
+    });
+    return [...map.values()].sort((a,b) => b.date - a.date).map(e => {
+      const atvA = e.donA ? e.dthuA/e.donA : 0;
+      const atvT = e.donT ? e.dthuT/e.donT : 0;
+      const uptA = e.donA ? e.spA/e.donA : 0;
+      const uptT = e.donT ? e.spT/e.donT : 0;
+      const crvA = e.trafficA ? (e.donA/e.trafficA)*100 : 0;
+      const crvT = e.trafficT ? (e.donT/e.trafficT)*100 : 0;
+      return { ...e, atvA, atvT, uptA, uptT, crvA, crvT };
+    });
+  }, [filtered]);
+
+  const dailySeries = useMemo(() => [...dailyAggregate].reverse().map(e => ({ ...e, label: formatDateKey(e.date) })), [dailyAggregate]);
+
+  const branchClassification = useMemo(() => {
+    const byBranch = new Map();
+    filtered.forEach(r => {
+      if (!byBranch.has(r.branch)) byBranch.set(r.branch, { branch:r.branch, region:r.region, storeType:r.storeType, dthuA:0, donA:0, spA:0, trafficA:0, dthuT:0, donT:0, spT:0, trafficT:0, days:0 });
+      const e = byBranch.get(r.branch);
+      e.dthuA += r.dthuA; e.donA += r.donA; e.spA += r.spA; e.trafficA += r.trafficA;
+      e.dthuT += r.dthuT; e.donT += r.donT; e.spT += r.spT; e.trafficT += r.trafficT; e.days += 1;
+    });
+    return [...byBranch.values()].map(e => {
+      const trafficRatio = e.trafficT ? e.trafficA/e.trafficT : 0;
+      const crvA = e.trafficA ? (e.donA/e.trafficA)*100 : 0;
+      const crvT = e.trafficT ? (e.donT/e.trafficT)*100 : 0;
+      const crvRatio = crvT ? crvA/crvT : 0;
+      const atvA = e.donA ? e.dthuA/e.donA : 0;
+      const atvT = e.donT ? e.dthuT/e.donT : 0;
+      const atvRatio = atvT ? atvA/atvT : 0;
+      const tDat = trafficRatio >= 1, cDat = crvRatio >= 1, aDat = atvRatio >= 1;
+      return { ...e, trafficRatio, crvRatio, atvRatio, crvA, crvT, atvA, atvT, tDat, cDat, aDat, group:getStoreGroup(tDat,cDat,aDat) };
+    }).sort((a,b) => a.group.localeCompare(b.group) || a.branch.localeCompare(b.branch));
+  }, [filtered]);
+
+  const groupSummary = useMemo(() => {
+    const out = {}; Object.keys(GROUP_INFO).forEach(g => out[g] = []);
+    branchClassification.forEach(b => { if (out[b.group]) out[b.group].push(b); });
+    return out;
+  }, [branchClassification]);
+
+  const branchRanking = useMemo(() => [...branchClassification].sort((a,b) => b.dthuA - a.dthuA), [branchClassification]);
+
+  const exportCsv = () => {
+    if (filtered.length === 0) return;
+    const rows = filtered.map(r => ({ 'Ngày':formatDateFull(r.date),'Chi nhánh':r.branch,'Vùng':r.region,'Loại CH':r.storeType,
+      'DTHU đạt':r.dthuA,'DTHU MT':r.dthuT,'Đơn đạt':r.donA,'Đơn MT':r.donT,'Traffic đạt':r.trafficA,'Traffic MT':r.trafficT,'ATV đạt':r.atvA,'CRV đạt':r.crvA }));
+    const csv = Papa.unparse(rows);
+    const blob = new Blob(["\uFEFF"+csv], { type:'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'gumac-dashboard-export.csv'; a.click();
+  };
+
+  const shareLink = () => {
+    if (!csvUrl) { alert('Hãy nhập và tải dữ liệu CSV trước'); return; }
+    const url = `${window.location.origin}${window.location.pathname}?csv=${encodeURIComponent(csvUrl)}`;
+    navigator.clipboard.writeText(url).then(() => alert('Đã copy link chia sẻ! (Người nhận vẫn cần mật khẩu để xem)'));
+  };
+
+  const PAGE_SIZE = 15;
+  const totalDailyPages = Math.ceil(dailyAggregate.length / PAGE_SIZE);
+  const dailyPageData = dailyAggregate.slice(dailyTablePage*PAGE_SIZE, (dailyTablePage+1)*PAGE_SIZE);
+
+  return (
+    <div className="min-h-screen">
+      {/* Header */}
+      <header className="px-6 py-5 sticky top-0 z-30 glass border-b border-slate-200/40">
+        <div className="max-w-[1400px] mx-auto flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-4">
+            <div className="w-11 h-11 rounded-2xl flex items-center justify-center" style={{background:'linear-gradient(135deg, #c7dafc 0%, #d9c8f7 50%, #f7c8dc 100%)', boxShadow:'0 4px 12px rgba(184,156,240,0.25)'}}>
+              <IconSparkles size={20} className="text-white" stroke={2.5}/>
+            </div>
+            <div>
+              <h1 className="display-font text-2xl font-bold tracking-tight">GUMAC Dashboard</h1>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {dateRange ? <>Kỳ phân tích <span className="font-semibold text-slate-700">{formatDateKey(dateRange[0])} → {formatDateKey(dateRange[1])}</span>{prevRange && <span className="text-slate-400"> • Cùng kỳ {formatDateKey(prevRange[0])} → {formatDateKey(prevRange[1])}</span>}</> : 'Đang tải...'}
+                {usingSample && <span className="ml-2 pill" style={{background:'#fdf6e3', color:'#a87f1e'}}>Dữ liệu mẫu</span>}
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2 items-center">
+            <button onClick={shareLink} className="px-4 py-2 rounded-xl bg-white/60 hover:bg-white border border-slate-200/60 text-slate-700 text-sm font-medium flex items-center gap-2 transition">
+              <IconShare size={15}/> Chia sẻ
+            </button>
+            <button onClick={exportCsv} className="px-4 py-2 rounded-xl bg-white/60 hover:bg-white border border-slate-200/60 text-slate-700 text-sm font-medium flex items-center gap-2 transition">
+              <IconDownload size={15}/> Xuất CSV
+            </button>
+            <button onClick={onLogout} title="Đăng xuất" className="w-10 h-10 rounded-xl bg-white/60 hover:bg-rose-50 hover:text-rose-500 border border-slate-200/60 text-slate-500 flex items-center justify-center transition">
+              <IconLogout size={16}/>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-[1400px] mx-auto px-6 py-8 space-y-6">
+
+        <section className="surface p-6 fadeup">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{background:'#eef4ff'}}><IconRefresh size={15} className="text-blue-500"/></div>
+            <h2 className="display-font font-bold text-slate-800 text-base">Nguồn dữ liệu</h2>
+          </div>
+          <div className="flex flex-col md:flex-row gap-3">
+            <input type="text" placeholder="Dán link CSV public từ Google Sheet (Publish to web → CSV)" value={csvUrl} onChange={e => setCsvUrl(e.target.value)} className="input-soft flex-1" />
+            <button onClick={() => loadFromCsv()} disabled={loading} className="btn-primary flex items-center gap-2 justify-center">
+              <IconRefresh className={loading?'spin':''} size={15}/> {loading ? 'Đang tải...' : 'Tải dữ liệu'}
+            </button>
+            <label className="px-5 py-3 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-sm font-medium flex items-center gap-2 cursor-pointer transition">
+              <IconUpload size={15}/> Upload CSV
+              <input type="file" accept=".csv,.tsv" onChange={handleFileUpload} className="hidden" />
+            </label>
+          </div>
+          {error && (
+            <div className={`mt-3 px-4 py-2.5 rounded-xl text-sm flex items-start gap-2 ${error.startsWith('✓') ? 'bg-emerald-50/80 text-emerald-700 border border-emerald-100' : 'bg-rose-50/80 text-rose-600 border border-rose-100'}`}>
+              {error.startsWith('✓') ? <IconCheck size={16} className="mt-0.5 shrink-0"/> : <IconAlert size={16} className="mt-0.5 shrink-0"/>} {error}
+            </div>
+          )}
+        </section>
+
+        <section className="surface p-6 fadeup" style={{animationDelay:'50ms'}}>
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{background:'#f4eeff'}}><IconFilter size={14} className="text-purple-400"/></div>
+            <h2 className="display-font font-bold text-slate-800 text-base">Bộ lọc</h2>
+          </div>
+
+          <div className="mb-4 pb-4 border-b border-slate-100">
+            <label className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 mb-3 uppercase tracking-wider">
+              <IconCalendar size={12}/> Khoảng ngày
+            </label>
+            <div className="flex flex-wrap gap-2 mb-3">
+              {[{v:'last_7',l:'7 ngày'},{v:'last_30',l:'30 ngày'},{v:'this_month',l:'Tháng này'},{v:'last_month',l:'Tháng trước'},{v:'all',l:'Tất cả'},{v:'custom',l:'Tùy chỉnh'}].map(p => (
+                <button key={p.v} onClick={() => setDateRangePreset(p.v)}
+                  className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all`}
+                  style={dateRangePreset === p.v ? {background:'linear-gradient(135deg, #5b8def, #b89cf0)', color:'white', border:'none'} : {background:'#f8fafc', color:'#64748b', border:'1px solid rgba(15,23,42,0.06)'}}>
+                  {p.l}
+                </button>
+              ))}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Từ ngày</label>
+                <input type="date" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setDateRangePreset('custom'); }} className="input-soft"/>
+              </div>
+              <div>
+                <label className="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Đến ngày</label>
+                <input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setDateRangePreset('custom'); }} className="input-soft"/>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <FilterSelect label="Vùng" value={filterRegion} onChange={v => { setFilterRegion(v); setFilterBranch('all'); }} options={[{v:'all',l:'Tất cả vùng'},...regions.map(r => ({v:r,l:r}))]}/>
+            <FilterSelect label="Loại cửa hàng" value={filterStoreType} onChange={v => { setFilterStoreType(v); setFilterBranch('all'); }} options={[{v:'all',l:'Tất cả loại'},...storeTypes.map(r => ({v:r,l:r}))]}/>
+            <FilterSelect label="Chi nhánh" value={filterBranch} onChange={setFilterBranch} options={[{v:'all',l:'Tất cả chi nhánh'},...branches.map(r => ({v:r,l:r}))]}/>
+          </div>
+        </section>
+
+        <section className="grid grid-cols-2 lg:grid-cols-4 gap-4 fadeup" style={{animationDelay:'100ms'}}>
+          <KpiCard label="Doanh thu" value={formatCurrency(cur.dthuA)} target={formatCurrency(cur.dthuT)} vsTarget={pctChange(cur.dthuA,cur.dthuT)} vsPrev={pctChange(cur.dthuA,prev.dthuA)} accent="#c7dafc" iconBg="#eef4ff" delay={0}/>
+          <KpiCard label="Traffic" value={formatNumber(cur.trafficA)} target={formatNumber(cur.trafficT)} vsTarget={pctChange(cur.trafficA,cur.trafficT)} vsPrev={pctChange(cur.trafficA,prev.trafficA)} accent="#d9c8f7" iconBg="#f4eeff" delay={50}/>
+          <KpiCard label="ATV" value={formatCurrency(cur.atvA)} target={formatCurrency(cur.atvT)} vsTarget={pctChange(cur.atvA,cur.atvT)} vsPrev={pctChange(cur.atvA,prev.atvA)} accent="#f7c8dc" iconBg="#fdeef4" delay={100}/>
+          <KpiCard label="CRV" value={formatNumber(cur.crvA,2)+'%'} target={formatNumber(cur.crvT,2)+'%'} vsTarget={pctChange(cur.crvA,cur.crvT)} vsPrev={pctChange(cur.crvA,prev.crvA)} accent="#b9e6c9" iconBg="#ecf7f0" delay={150}/>
+        </section>
+
+        <section className="surface-elevated p-7 fadeup" style={{animationDelay:'150ms'}}>
+          <div className="mb-5 flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{background:'#eef4ff'}}><IconChart size={15} className="text-blue-500"/></div>
+            <div>
+              <h2 className="display-font text-lg font-bold text-slate-800">Tổng quan các chỉ số</h2>
+              <p className="text-xs text-slate-500 mt-0.5">Thực đạt vs Mục tiêu vs Cùng kỳ tháng trước</p>
+            </div>
+          </div>
+          <div className="overflow-x-auto -mx-2">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
+                  <th className="text-left py-3 px-3">Chỉ số</th>
+                  <th className="text-right py-3 px-3">Thực đạt</th>
+                  <th className="text-right py-3 px-3">Mục tiêu</th>
+                  <th className="text-right py-3 px-3 text-emerald-600">% Hoàn thành</th>
+                  <th className="text-right py-3 px-3">TT vs MT</th>
+                  <th className="text-right py-3 px-3">Cùng kỳ</th>
+                  <th className="text-right py-3 px-3">TT vs CK</th>
+                  <th className="py-3 px-3 w-32">Tiến độ</th>
+                </tr>
+              </thead>
+              <tbody>{compareTable.map(m => (
+                <tr key={m.k} className="border-t border-slate-100 hover:bg-slate-50/40 transition">
+                  <td className="py-3.5 px-3 font-semibold text-slate-800">{m.label}</td>
+                  <td className="py-3.5 px-3 text-right ticker font-bold text-slate-900">{m.actDisplay}</td>
+                  <td className="py-3.5 px-3 text-right ticker text-slate-400">{m.tgtDisplay}</td>
+                  <td className="py-3.5 px-3 text-right ticker font-bold" style={{color: m.pctOfTarget==null?'#94a3b8':m.pctOfTarget>=100?'#6dc88a':m.pctOfTarget>=80?'#d4a849':'#e57878'}}>{m.pctOfTarget==null?'—':m.pctOfTarget.toFixed(1)+'%'}</td>
+                  <td className="py-3.5 px-3 text-right"><DeltaCell v={m.vsTarget}/></td>
+                  <td className="py-3.5 px-3 text-right ticker text-slate-400">{m.prevDisplay}</td>
+                  <td className="py-3.5 px-3 text-right"><DeltaCell v={m.vsPrev}/></td>
+                  <td className="py-3.5 px-3"><div className="h-1.5 rounded-full bg-slate-100 overflow-hidden"><div className="h-full rounded-full transition-all" style={{width:`${Math.min(m.pctOfTarget||0,100)}%`,background:(m.pctOfTarget||0)>=100?'linear-gradient(90deg, #b9e6c9, #6dc88a)':(m.pctOfTarget||0)>=80?'linear-gradient(90deg, #f8dcae, #e6b855)':'linear-gradient(90deg, #f5b9b9, #e57878)'}}/></div></td>
+                </tr>
+              ))}</tbody>
+            </table>
+          </div>
+        </section>
+
+        <section className="surface-elevated p-7 fadeup" style={{animationDelay:'200ms'}}>
+          <div className="mb-5 flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{background:'#fdeef4'}}><IconChart size={15} className="text-pink-400"/></div>
+            <div>
+              <h2 className="display-font text-lg font-bold text-slate-800">Xu hướng theo ngày</h2>
+              <p className="text-xs text-slate-500 mt-0.5">Đường liền: Thực đạt • Đường đứt: Mục tiêu</p>
+            </div>
+          </div>
+          <div style={{width:'100%',height:340}}>
+            <ResponsiveContainer>
+              <AreaChart data={dailySeries} margin={{top:10,right:30,left:0,bottom:0}}>
+                <defs>
+                  <linearGradient id="gDthu" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#93b6f5" stopOpacity={0.35}/>
+                    <stop offset="100%" stopColor="#93b6f5" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="gDon" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#ed9ebe" stopOpacity={0.3}/>
+                    <stop offset="100%" stopColor="#ed9ebe" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 6" stroke="rgba(15,23,42,0.05)" vertical={false}/>
+                <XAxis dataKey="label" stroke="#94a3b8" fontSize={11} axisLine={false} tickLine={false} dy={8}/>
+                <YAxis yAxisId="left" stroke="#94a3b8" fontSize={11} tickFormatter={formatCurrency} axisLine={false} tickLine={false}/>
+                <YAxis yAxisId="right" orientation="right" stroke="#94a3b8" fontSize={11} axisLine={false} tickLine={false}/>
+                <Tooltip contentStyle={{borderRadius:14,border:'1px solid rgba(15,23,42,0.06)',fontSize:12,boxShadow:'0 8px 24px rgba(15,23,42,0.08)',background:'rgba(255,255,255,0.95)',backdropFilter:'blur(8px)'}}
+                  formatter={(v,n) => n.indexOf('DTHU') >= 0 ? formatCurrency(v) : formatNumber(v)}/>
+                <Legend wrapperStyle={{fontSize:12, paddingTop:12}} iconType="circle"/>
+                <Area yAxisId="left" type="monotone" dataKey="dthuA" name="DTHU thực đạt" stroke="#5b8def" strokeWidth={2.5} fill="url(#gDthu)" dot={false} activeDot={{r:5, fill:'#5b8def', strokeWidth:0}}/>
+                <Line yAxisId="left" type="monotone" dataKey="dthuT" name="DTHU mục tiêu" stroke="#5b8def" strokeWidth={1.5} strokeDasharray="4 4" dot={false}/>
+                <Area yAxisId="right" type="monotone" dataKey="donA" name="Đơn thực đạt" stroke="#ed9ebe" strokeWidth={2.5} fill="url(#gDon)" dot={false} activeDot={{r:5, fill:'#ed9ebe', strokeWidth:0}}/>
+                <Line yAxisId="right" type="monotone" dataKey="donT" name="Đơn mục tiêu" stroke="#ed9ebe" strokeWidth={1.5} strokeDasharray="4 4" dot={false}/>
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
+
+        {/* DAILY DETAIL TABLE */}
+        <section className="surface-elevated p-7 fadeup" style={{animationDelay:'225ms'}}>
+          <div className="mb-5 flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{background:'#ecf7f0'}}><IconTable size={15} className="text-emerald-500"/></div>
+              <div>
+                <h2 className="display-font text-lg font-bold text-slate-800">Chi tiết tất cả chỉ số theo ngày</h2>
+                <p className="text-xs text-slate-500 mt-0.5">Tổng hợp tất cả chi nhánh đã lọc • Mới nhất → cũ nhất</p>
+              </div>
+            </div>
+            {totalDailyPages > 1 && (
+              <div className="flex items-center gap-2 text-xs">
+                <button onClick={() => setDailyTablePage(Math.max(0, dailyTablePage-1))} disabled={dailyTablePage===0} className="px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 disabled:opacity-40 transition font-medium" style={{border:'1px solid rgba(15,23,42,0.06)'}}>‹ Trước</button>
+                <span className="text-slate-500">Trang {dailyTablePage+1}/{totalDailyPages}</span>
+                <button onClick={() => setDailyTablePage(Math.min(totalDailyPages-1, dailyTablePage+1))} disabled={dailyTablePage>=totalDailyPages-1} className="px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 disabled:opacity-40 transition font-medium" style={{border:'1px solid rgba(15,23,42,0.06)'}}>Sau ›</button>
+              </div>
+            )}
+          </div>
+          <div className="overflow-x-auto -mx-3">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
+                  <th rowSpan="2" className="text-left py-3 px-3 sticky left-0 bg-white">Ngày</th>
+                  <th colSpan="2" className="text-center py-3 px-2 border-l border-slate-100" style={{color:'#5b8def'}}>Doanh thu</th>
+                  <th colSpan="2" className="text-center py-3 px-2 border-l border-slate-100" style={{color:'#ed9ebe'}}>Đơn hàng</th>
+                  <th colSpan="2" className="text-center py-3 px-2 border-l border-slate-100" style={{color:'#b89cf0'}}>Sản phẩm</th>
+                  <th colSpan="2" className="text-center py-3 px-2 border-l border-slate-100" style={{color:'#d4a849'}}>Traffic</th>
+                  <th colSpan="2" className="text-center py-3 px-2 border-l border-slate-100" style={{color:'#6dc88a'}}>ATV</th>
+                  <th colSpan="2" className="text-center py-3 px-2 border-l border-slate-100" style={{color:'#5b8def'}}>UPT</th>
+                  <th colSpan="2" className="text-center py-3 px-2 border-l border-slate-100" style={{color:'#e57878'}}>CRV (%)</th>
+                </tr>
+                <tr className="text-[10px] text-slate-400 font-medium border-b border-slate-200">
+                  <th className="text-right py-2 px-2 border-l border-slate-100">Đạt</th><th className="text-right py-2 px-2">MT</th>
+                  <th className="text-right py-2 px-2 border-l border-slate-100">Đạt</th><th className="text-right py-2 px-2">MT</th>
+                  <th className="text-right py-2 px-2 border-l border-slate-100">Đạt</th><th className="text-right py-2 px-2">MT</th>
+                  <th className="text-right py-2 px-2 border-l border-slate-100">Đạt</th><th className="text-right py-2 px-2">MT</th>
+                  <th className="text-right py-2 px-2 border-l border-slate-100">Đạt</th><th className="text-right py-2 px-2">MT</th>
+                  <th className="text-right py-2 px-2 border-l border-slate-100">Đạt</th><th className="text-right py-2 px-2">MT</th>
+                  <th className="text-right py-2 px-2 border-l border-slate-100">Đạt</th><th className="text-right py-2 px-2">MT</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dailyPageData.map((d) => (
+                  <tr key={d.date.toISOString()} className="border-b border-slate-50 hover:bg-slate-50/40 transition">
+                    <td className="py-2.5 px-3 font-semibold text-slate-700 sticky left-0 bg-white whitespace-nowrap">{formatDateFull(d.date)}</td>
+                    <td className="py-2.5 px-2 text-right ticker border-l border-slate-100 font-medium text-slate-800">{formatCurrency(d.dthuA)}</td>
+                    <td className="py-2.5 px-2 text-right ticker text-slate-400">{formatCurrency(d.dthuT)}</td>
+                    <td className="py-2.5 px-2 text-right ticker border-l border-slate-100 font-medium text-slate-800">{formatNumber(d.donA)}</td>
+                    <td className="py-2.5 px-2 text-right ticker text-slate-400">{formatNumber(d.donT)}</td>
+                    <td className="py-2.5 px-2 text-right ticker border-l border-slate-100 font-medium text-slate-800">{formatNumber(d.spA)}</td>
+                    <td className="py-2.5 px-2 text-right ticker text-slate-400">{formatNumber(d.spT)}</td>
+                    <td className="py-2.5 px-2 text-right ticker border-l border-slate-100 font-medium text-slate-800">{formatNumber(d.trafficA)}</td>
+                    <td className="py-2.5 px-2 text-right ticker text-slate-400">{formatNumber(d.trafficT)}</td>
+                    <td className="py-2.5 px-2 text-right ticker border-l border-slate-100 font-medium text-slate-800">{formatCurrency(d.atvA)}</td>
+                    <td className="py-2.5 px-2 text-right ticker text-slate-400">{formatCurrency(d.atvT)}</td>
+                    <td className="py-2.5 px-2 text-right ticker border-l border-slate-100 font-medium text-slate-800">{formatNumber(d.uptA,2)}</td>
+                    <td className="py-2.5 px-2 text-right ticker text-slate-400">{formatNumber(d.uptT,2)}</td>
+                    <td className="py-2.5 px-2 text-right ticker border-l border-slate-100 font-medium text-slate-800">{formatNumber(d.crvA,2)}</td>
+                    <td className="py-2.5 px-2 text-right ticker text-slate-400">{formatNumber(d.crvT,2)}</td>
+                  </tr>
+                ))}
+                {dailyAggregate.length === 0 && (
+                  <tr><td colSpan="15" className="text-center py-12 text-slate-400">Không có dữ liệu trong khoảng ngày này</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-5 fadeup" style={{animationDelay:'250ms'}}>
+          <div className="surface-elevated p-7">
+            <div className="flex items-center gap-2 mb-5">
+              <span className="pill" style={{background:'#ecf7f0', color:'#3f9b5d'}}>TOP</span>
+              <h3 className="display-font text-lg font-bold text-slate-800">5 chi nhánh dẫn đầu</h3>
+            </div>
+            <RankList items={branchRanking.slice(0,5)} variant="good"/>
+          </div>
+          <div className="surface-elevated p-7">
+            <div className="flex items-center gap-2 mb-5">
+              <span className="pill" style={{background:'#fdecec', color:'#c44545'}}>CẦN CẢI THIỆN</span>
+              <h3 className="display-font text-lg font-bold text-slate-800">5 chi nhánh thấp nhất</h3>
+            </div>
+            <RankList items={branchRanking.slice(-5).reverse()} variant="warn"/>
+          </div>
+        </section>
+
+        <section className="surface-elevated p-7 fadeup" style={{animationDelay:'300ms'}}>
+          <div className="mb-6 flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{background:'#f4eeff'}}><IconSparkles size={15} className="text-purple-400"/></div>
+            <div>
+              <h2 className="display-font text-lg font-bold text-slate-800">Phân loại chi nhánh</h2>
+              <p className="text-xs text-slate-500 mt-0.5">Theo Traffic × CRV × ATV — Đạt khi Thực đạt ≥ Mục tiêu (tổng cả kỳ)</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-4 lg:grid-cols-8 gap-3 mb-6">
+            {Object.entries(GROUP_INFO).map(([g,info]) => (
+              <div key={g} className="rounded-2xl p-4 text-center transition hover:-translate-y-0.5" style={{background:info.bg, border:`1px solid ${info.border}`}}>
+                <div className="text-[10px] font-bold mb-1" style={{color:info.color}}>{g}</div>
+                <div className="text-3xl font-bold ticker mb-1 display-font" style={{color:info.color}}>{groupSummary[g].length}</div>
+                <div className="text-[10px] text-slate-600 leading-tight font-medium">{info.label}</div>
+              </div>
+            ))}
+          </div>
+          <div className="space-y-4">
+            {Object.entries(GROUP_INFO).map(([g,info]) => {
+              const stores = groupSummary[g];
+              if (stores.length === 0) return null;
+              return (
+                <div key={g} className="rounded-2xl border overflow-hidden" style={{borderColor:info.border}}>
+                  <div className="px-5 py-4 flex items-start gap-4" style={{background:info.bg}}>
+                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-white shrink-0 display-font text-base" style={{background:info.color}}>{g}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-bold text-slate-800">{info.label}</span>
+                        <span className="text-[11px] text-slate-500 font-mono">{info.cond}</span>
+                        <span className="ml-auto pill" style={{background:'rgba(255,255,255,0.7)', color:info.color}}>{stores.length} chi nhánh</span>
+                      </div>
+                      <p className="text-sm text-slate-600 mt-2 leading-relaxed"><span className="font-semibold text-slate-700">Khuyến nghị:</span> {info.action}</p>
+                    </div>
+                  </div>
+                  <div className="bg-white overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead><tr className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold border-b border-slate-100">
+                        <th className="text-left py-3 px-5">Chi nhánh</th>
+                        <th className="text-left py-3 px-2">Vùng</th>
+                        <th className="text-left py-3 px-2">Loại</th>
+                        <th className="text-right py-3 px-2">Traffic %MT</th>
+                        <th className="text-right py-3 px-2">CRV %MT</th>
+                        <th className="text-right py-3 px-2">ATV %MT</th>
+                        <th className="text-right py-3 px-5">DTHU</th>
+                      </tr></thead>
+                      <tbody>{stores.map(s => (
+                        <tr key={s.branch} className="border-b border-slate-50 last:border-b-0 hover:bg-slate-50/40 transition">
+                          <td className="py-3 px-5 font-semibold text-slate-800">{s.branch}</td>
+                          <td className="py-3 px-2 text-slate-500 text-xs">{s.region}</td>
+                          <td className="py-3 px-2 text-slate-500 text-xs">{s.storeType}</td>
+                          <td className="py-3 px-2 text-right ticker text-xs font-semibold" style={{color: s.tDat?'#6dc88a':'#e57878'}}>{(s.trafficRatio*100).toFixed(0)}%</td>
+                          <td className="py-3 px-2 text-right ticker text-xs font-semibold" style={{color: s.cDat?'#6dc88a':'#e57878'}}>{(s.crvRatio*100).toFixed(0)}%</td>
+                          <td className="py-3 px-2 text-right ticker text-xs font-semibold" style={{color: s.aDat?'#6dc88a':'#e57878'}}>{(s.atvRatio*100).toFixed(0)}%</td>
+                          <td className="py-3 px-5 text-right ticker font-bold text-slate-800">{formatCurrency(s.dthuA)}</td>
+                        </tr>
+                      ))}</tbody>
+                    </table>
+                  </div>
+                </div>
+              );
+            })}
+            {branchClassification.length === 0 && <div className="text-center py-12 text-slate-400 text-sm">Không có dữ liệu để phân loại</div>}
+          </div>
+        </section>
+
+        <footer className="text-center text-xs text-slate-400 pt-4 pb-12">
+          <span className="shimmer-text font-semibold">GUMAC Dashboard</span> • Phân tích thông minh • Cập nhật real-time theo nguồn dữ liệu
+        </footer>
+      </div>
+    </div>
+  );
+}
+
+function FilterSelect({ label, value, onChange, options }) {
+  return (
+    <div>
+      <label className="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">{label}</label>
+      <select value={value} onChange={e => onChange(e.target.value)} className="input-soft cursor-pointer">
+        {options.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
+      </select>
+    </div>
+  );
+}
+
+function DeltaCell({ v }) {
+  if (v == null) return <span className="text-slate-300 text-xs">—</span>;
+  const up = v > 0, down = v < 0;
+  const color = up ? '#6dc88a' : down ? '#e57878' : '#94a3b8';
+  return (
+    <span className="inline-flex items-center gap-1 ticker font-semibold text-xs" style={{color}}>
+      {up?<IconUp size={12} stroke={2.5}/>:down?<IconDown size={12} stroke={2.5}/>:<IconMinus size={12} stroke={2.5}/>}
+      {v>0?'+':''}{v.toFixed(1)}%
+    </span>
+  );
+}
+
+function KpiCard({ label, value, target, vsTarget, vsPrev, accent, iconBg, delay=0 }) {
+  return (
+    <div className="surface p-5 relative overflow-hidden fadeup" style={{animationDelay:`${delay}ms`}}>
+      <div className="absolute top-0 right-0 w-24 h-24 rounded-full opacity-40 blur-2xl" style={{background:accent}}/>
+      <div className="relative">
+        <div className="flex items-center justify-between mb-3">
+          <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{label}</div>
+          <div className="w-7 h-7 rounded-xl flex items-center justify-center" style={{background:iconBg}}>
+            <div className="w-2 h-2 rounded-full" style={{background:accent, filter:'brightness(0.9)'}}/>
+          </div>
+        </div>
+        <div className="display-font text-2xl font-bold text-slate-900 ticker mb-1">{value}</div>
+        <div className="text-[11px] text-slate-400">Mục tiêu <span className="ticker text-slate-500 font-medium">{target}</span></div>
+        <div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-slate-100">
+          <div>
+            <div className="text-[9px] text-slate-400 uppercase tracking-wider font-semibold mb-1">vs MT</div>
+            <DeltaCell v={vsTarget}/>
+          </div>
+          <div>
+            <div className="text-[9px] text-slate-400 uppercase tracking-wider font-semibold mb-1">vs CK</div>
+            <DeltaCell v={vsPrev}/>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RankList({ items, variant='good' }) {
+  const max = Math.max(...items.map(i => i.dthuA), 1);
+  const grad = variant === 'good' ? 'linear-gradient(90deg, #b9e6c9, #6dc88a)' : 'linear-gradient(90deg, #f5b9b9, #e57878)';
+  const badgeBg = variant === 'good' ? '#ecf7f0' : '#fdecec';
+  const badgeColor = variant === 'good' ? '#3f9b5d' : '#c44545';
+  return (
+    <div className="space-y-3">{items.map((it,i) => (
+      <div key={it.branch} className="flex items-center gap-3">
+        <div className="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold shrink-0 display-font" style={{background:badgeBg, color:badgeColor}}>{i+1}</div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <span className="text-sm font-semibold text-slate-800 truncate">{it.branch}</span>
+            <span className="text-sm ticker font-bold text-slate-900">{formatCurrency(it.dthuA)}</span>
+          </div>
+          <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
+            <div className="h-full rounded-full transition-all" style={{width:`${(it.dthuA/max)*100}%`,background:grad}}/>
+          </div>
+          <div className="text-[10px] text-slate-400 mt-1 font-medium">{it.region} • {it.dthuT?`${((it.dthuA/it.dthuT)*100).toFixed(0)}% MT`:'N/A'}</div>
+        </div>
+      </div>
+    ))}</div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
