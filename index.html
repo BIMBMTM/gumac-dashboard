@@ -131,7 +131,7 @@
 
 <script type="text/babel" data-presets="react">
 const { useState, useMemo, useEffect, useRef } = React;
-const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area, AreaChart } = Recharts;
+const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area, AreaChart, ComposedChart } = Recharts;
 
 // ============ ICONS ============
 const Icon = ({ d, size = 16, className = '', stroke = 2 }) => (
@@ -200,14 +200,46 @@ const getStoreGroup = (t,c,a) => {
 };
 
 const GROUP_INFO = {
-  B1: { color:'#6dc88a', bg:'#e8f5ee', border:'#b9e6c9', label:'Xuất sắc', cond:'Traffic ✓ • CRV ✓ • ATV ✓', action:'Duy trì & nhân rộng mô hình. Khen thưởng, làm case study cho các chi nhánh khác học hỏi.' },
-  B2: { color:'#d4a849', bg:'#fdf6e3', border:'#f8dcae', label:'Tốt - thiếu ATV', cond:'Traffic ✓ • CRV ✓ • ATV ✗', action:'Đào tạo upsell/cross-sell, gợi ý combo & sản phẩm cao giá. Trưng bày sản phẩm bổ sung tại quầy thu ngân.' },
-  B3: { color:'#e57878', bg:'#fdecec', border:'#f5b9b9', label:'Kém - chốt đơn yếu', cond:'Traffic ✓ • CRV ✗ • ATV ✓', action:'Tập trung kỹ năng tư vấn & chốt đơn cho NV. Rà soát quy trình bán hàng, kịch bản tư vấn, thái độ phục vụ.' },
-  B4: { color:'#e57878', bg:'#fdecec', border:'#f5b9b9', label:'Kém - chuyển đổi yếu', cond:'Traffic ✓ • CRV ✗ • ATV ✗', action:'Có khách nhưng không bán được hàng. Audit toàn diện: nhân sự, sản phẩm trưng bày, giá, kỹ năng bán hàng. Ưu tiên xử lý.' },
-  B5: { color:'#d4a849', bg:'#fdf6e3', border:'#f8dcae', label:'Tốt - thiếu Traffic', cond:'Traffic ✗ • CRV ✓ • ATV ✓', action:'Nội tại tốt nhưng thiếu khách. Tăng marketing local, khuyến mãi hút khách, review vị trí - biển hiệu - giờ mở cửa.' },
-  B6: { color:'#e57878', bg:'#fdecec', border:'#f5b9b9', label:'Kém - 2 mặt yếu', cond:'Traffic ✗ • CRV ✓ • ATV ✗', action:'Cần kéo khách + tăng giá trị đơn. Triển khai chương trình combo, mua kèm; song song chạy ads/khuyến mãi local.' },
-  B7: { color:'#e57878', bg:'#fdecec', border:'#f5b9b9', label:'Kém - chỉ bán giá trị cao', cond:'Traffic ✗ • CRV ✗ • ATV ✓', action:'Lượng khách & tỷ lệ chốt đều thấp. Rà soát tổng thể marketing & vận hành, có thể cần thay đổi nhân sự quản lý.' },
-  B8: { color:'#c95757', bg:'#fce0e0', border:'#e57878', label:'Báo động - cần can thiệp', cond:'Traffic ✗ • CRV ✗ • ATV ✗', action:'🚨 KHẨN CẤP. Cần kế hoạch xử lý đặc biệt: thay quản lý, tái đào tạo nhân viên, đánh giá khả năng đóng cửa hoặc tái cấu trúc.' },
+  B1: { color:'#6dc88a', bg:'#e8f5ee', border:'#b9e6c9', label:'Xuất sắc', cond:'Traffic ✓ • CRV ✓ • ATV ✓',
+    action:'Duy trì & nhân rộng mô hình. Khen thưởng, làm case study cho các chi nhánh khác học hỏi.',
+    trade: 'Duy trì set-up trưng bày hiện tại. Triển khai chương trình loyalty/VIP để giữ khách quen. Tăng quà tặng kèm cho khách thân thiết. Đề xuất nhân rộng mô hình sang chi nhánh khác.',
+    digital: 'Tăng ngân sách ads 15-20% tại khu vực này để mở rộng độ phủ. Chạy retargeting khách đã ghé. Tối ưu Google My Business + reviews. Đẩy mạnh Zalo OA/SMS marketing với database khách hàng.',
+    content: 'Sản xuất content "store tour" viral. Quay video testimonial khách hàng, behind-the-scenes nhân viên. Làm case study chi tiết để training cho các CN khác. PR trên báo chí địa phương.' },
+  B2: { color:'#d4a849', bg:'#fdf6e3', border:'#f8dcae', label:'Tốt - thiếu ATV', cond:'Traffic ✓ • CRV ✓ • ATV ✗',
+    action:'Đào tạo upsell/cross-sell, gợi ý combo & sản phẩm cao giá. Trưng bày sản phẩm bổ sung tại quầy thu ngân.',
+    trade: 'Set-up combo "Mua kèm tiết kiệm" tại điểm bán. Trưng bày sản phẩm cao giá ở vị trí hot. POSM gợi ý sản phẩm bổ sung tại quầy thu ngân. Đào tạo NV kỹ năng upsell tại quầy.',
+    digital: 'Push notification voucher "Thêm 200k được giảm 10%". Email/SMS giới thiệu combo cao giá. Chạy ads sản phẩm premium target khách đã từng mua. Remarketing cross-sell theo lịch sử mua.',
+    content: 'Content highlight giá trị sản phẩm cao cấp (chất liệu, công năng, độ bền). Video so sánh "đáng đầu tư". Photo-shoot combo đẹp mắt. Review/unbox sản phẩm cao giá từ KOC.' },
+  B3: { color:'#e57878', bg:'#fdecec', border:'#f5b9b9', label:'Kém - chốt đơn yếu', cond:'Traffic ✓ • CRV ✗ • ATV ✓',
+    action:'Tập trung kỹ năng tư vấn & chốt đơn cho NV. Rà soát quy trình bán hàng, kịch bản tư vấn, thái độ phục vụ.',
+    trade: 'Treo POSM CTA mạnh: "Ưu đãi hôm nay", "Còn 5 cái cuối". Flash sale theo khung giờ. Giảm 5-10% sản phẩm chiến lược kích chốt. Đào tạo lại kịch bản tư vấn & chốt đơn cho NV.',
+    digital: 'Retargeting ads khách đã ghé store nhưng chưa mua (qua Wifi marketing/Zalo). SMS/Zalo gửi voucher giảm giá có hạn. Chạy ads "limited offer" tạo urgency. Push qua Zalo OA cho khách trong bán kính 3km.',
+    content: 'Content tạo cảm giác cấp bách: countdown sale, số lượng có hạn. Video "5 lý do nên mua ngay hôm nay". Testimonial khách hàng đã mua cảm thấy hài lòng. FAQ giải đáp rào cản mua hàng.' },
+  B4: { color:'#e57878', bg:'#fdecec', border:'#f5b9b9', label:'Kém - chuyển đổi yếu', cond:'Traffic ✓ • CRV ✗ • ATV ✗',
+    action:'Có khách nhưng không bán được hàng. Audit toàn diện: nhân sự, sản phẩm trưng bày, giá, kỹ năng bán hàng. Ưu tiên xử lý.',
+    trade: 'CHIẾN DỊCH PHỤC HỒI: refresh visual merchandise toàn bộ store. Tung khuyến mãi sốc 1-2 tuần (giảm 20-30% sản phẩm hot). Survey khách rời cửa hàng (lý do không mua). Reset trưng bày, làm sạch, tái đào tạo NV.',
+    digital: 'Chạy ads "Sale lớn nhất năm" rầm rộ 2 tuần. Booking influencer địa phương check-in store. Voucher 100k cho khách mới. Retargeting toàn bộ data + lookalike audience để cứu doanh số.',
+    content: 'Mời KOL/KOC địa phương review để tạo lại uy tín. Content "Cửa hàng được làm mới" gây tò mò. Video before-after refresh store. Live tour store thu hút lượt xem. Reframing thương hiệu.' },
+  B5: { color:'#d4a849', bg:'#fdf6e3', border:'#f8dcae', label:'Tốt - thiếu Traffic', cond:'Traffic ✗ • CRV ✓ • ATV ✓',
+    action:'Nội tại tốt nhưng thiếu khách. Tăng marketing local, khuyến mãi hút khách, review vị trí - biển hiệu - giờ mở cửa.',
+    trade: 'Treo banner ngoài đường thu hút sự chú ý. Phát flyer khu dân cư bán kính 1-2km. Đặt biển chỉ đường tại các giao lộ. Chương trình "Khách mới giảm 15%". Hợp tác cross-promotion với shop lân cận.',
+    digital: 'Tăng mạnh ads Facebook/TikTok target bán kính 3-5km. Google ads keyword địa phương. Geo-targeting Zalo. Đăng ký Google My Business + Maps. Booking Foody/Lazada nếu phù hợp ngành.',
+    content: 'Hợp tác KOL/KOC địa phương review store. Video "khám phá cửa hàng mới". Content viral target dân cư khu vực (vd "địa điểm mới hot ở quận X"). Photo-spot check-in để khách tự share.' },
+  B6: { color:'#e57878', bg:'#fdecec', border:'#f5b9b9', label:'Kém - 2 mặt yếu', cond:'Traffic ✗ • CRV ✓ • ATV ✗',
+    action:'Cần kéo khách + tăng giá trị đơn. Triển khai chương trình combo, mua kèm; song song chạy ads/khuyến mãi local.',
+    trade: 'Combo kép: vừa kéo khách vừa tăng đơn. Set-up "Combo 3 món chỉ 299k" tại điểm bán. Voucher "Mua 2 tặng 1". Tổ chức minigame check-in store nhận quà. POSM kêu gọi mua thêm.',
+    digital: 'Chạy ads combo target local 3-5km. Livestream tại store: vừa hút view vừa bán hàng. Push voucher combo qua Zalo OA. Booking micro-influencer review combo. Retargeting tăng giá trị đơn.',
+    content: 'Content "Combo siêu hời" — visual ấn tượng tô giá trị tiết kiệm. Livestream demo combo. UGC khách review combo. Video local lifestyle gắn brand. Mini-game nhận voucher combo.' },
+  B7: { color:'#e57878', bg:'#fdecec', border:'#f5b9b9', label:'Kém - chỉ bán giá trị cao', cond:'Traffic ✗ • CRV ✗ • ATV ✓',
+    action:'Lượng khách & tỷ lệ chốt đều thấp. Rà soát tổng thể marketing & vận hành, có thể cần thay đổi nhân sự quản lý.',
+    trade: 'Đa dạng hóa giá: thêm dòng entry-product giá rẻ để hút khách phổ thông. Tổ chức event sampling/trải nghiệm miễn phí. Refresh không gian thân thiện hơn (giảm cảm giác "cao cấp khó tiếp cận"). Đào tạo NV phục vụ đa đối tượng.',
+    digital: 'Chạy ads sản phẩm entry giá thấp để mở rộng tệp khách. Booking influencer phổ thông (không chỉ KOL premium). Geo-target rộng hơn. Voucher khách mới hấp dẫn để xây tệp database mới.',
+    content: 'Reframing thương hiệu: từ "luxury khó với" sang "premium ai cũng dùng được". Content "đập tan định kiến giá cao". Video tour store thân thiện. UGC khách phổ thông trải nghiệm. Storytelling hạ rào cản tâm lý.' },
+  B8: { color:'#c95757', bg:'#fce0e0', border:'#e57878', label:'Báo động - cần can thiệp', cond:'Traffic ✗ • CRV ✗ • ATV ✗',
+    action:'🚨 KHẨN CẤP. Cần kế hoạch xử lý đặc biệt: thay quản lý, tái đào tạo nhân viên, đánh giá khả năng đóng cửa hoặc tái cấu trúc.',
+    trade: '🚨 STOP marketing thông thường. FIX vận hành trước (nhân sự, sản phẩm, layout). Sau đó relaunch như cửa hàng mới: đổi nhận diện, grand opening, khuyến mãi rầm rộ 2-4 tuần đầu. Đánh giá lại sau 2 tháng — nếu không cải thiện → cân nhắc đóng/dời địa điểm.',
+    digital: '🚨 Tạm ngưng ads thông thường (tránh tốn ngân sách). Chỉ chạy ads sau khi đã fix vận hành. Khi relaunch: ngân sách boost lớn 2 tuần đầu. Giveaway/minigame thu hút sự chú ý ban đầu. Database lại từ đầu.',
+    content: '🚨 Chuẩn bị campaign relaunch: storytelling "thay đổi", PR grand opening, mời báo chí địa phương. Sau khi fix vận hành mới làm content. KHÔNG content gì lúc store đang yếu — sẽ tổn thương thương hiệu.' },
 };
 
 const DEFAULT_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT5MDcm_erqg5Rne8BXEoQtN_eJPpcK6iI9GcT8MvTkp7QH8eOOmI3FtMrJ3c20kupcAMVik6jEAw-H/pub?gid=0&single=true&output=csv';
@@ -302,39 +334,59 @@ const normalizeRow = (row) => {
 };
 
 // ============ LOGIN ============
-const CORRECT_PASSWORD = 'GUMAC2026123456987';
+// SHA-256 hash của password thật. KHÔNG thể đoán ra password gốc từ chuỗi này.
+// Để đổi password: dùng tool tạo hash, copy hash mới vào đây.
+// Hash hiện tại = SHA-256 của 'GUMAC@2026%#dashgumac'
+const PASSWORD_HASH = 'c0d00315d7a6d0e0338541cf4da5d203fbc00cd2e164d784268732b8255d9a6e';
 const SESSION_KEY = 'gumac_dash_auth';
 const SESSION_HOURS = 8;
+
+// Hash 1 chuỗi bằng SHA-256 dùng Web Crypto API (built-in trình duyệt)
+async function sha256(text) {
+  const buf = new TextEncoder().encode(text);
+  const hashBuf = await crypto.subtle.digest('SHA-256', buf);
+  return Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
 
 function LoginGate({ onSuccess }) {
   const [pwd, setPwd] = useState('');
   const [showPwd, setShowPwd] = useState(false);
   const [err, setErr] = useState('');
   const [shake, setShake] = useState(false);
+  const [checking, setChecking] = useState(false);
   const inputRef = useRef(null);
 
   useEffect(() => { inputRef.current && inputRef.current.focus(); }, []);
 
-  const submit = (e) => {
+  const submit = async (e) => {
     if (e) e.preventDefault();
     const trimmed = pwd.trim();
-    if (trimmed === CORRECT_PASSWORD) {
-      try {
-        const expiry = Date.now() + SESSION_HOURS * 3600 * 1000;
-        sessionStorage.setItem(SESSION_KEY, JSON.stringify({ ok: true, expiry }));
-      } catch {}
-      onSuccess();
-    } else {
-      const expectedLen = CORRECT_PASSWORD.length;
-      const actualLen = trimmed.length;
-      let msg = 'Mật khẩu không đúng.';
-      if (actualLen === 0) msg = 'Vui lòng nhập mật khẩu.';
-      else if (actualLen !== expectedLen) msg = `Mật khẩu sai (cần ${expectedLen} ký tự, bạn nhập ${actualLen}).`;
-      setErr(msg);
+    if (!trimmed) {
+      setErr('Vui lòng nhập mật khẩu.');
+      setShake(true);
+      setTimeout(() => setShake(false), 500);
+      return;
+    }
+    setChecking(true);
+    try {
+      const inputHash = await sha256(trimmed);
+      if (inputHash === PASSWORD_HASH) {
+        try {
+          const expiry = Date.now() + SESSION_HOURS * 3600 * 1000;
+          sessionStorage.setItem(SESSION_KEY, JSON.stringify({ ok: true, expiry }));
+        } catch {}
+        onSuccess();
+        return;
+      }
+      setErr('Mật khẩu không đúng.');
       setShake(true);
       setTimeout(() => setShake(false), 500);
       inputRef.current && inputRef.current.focus();
       inputRef.current && inputRef.current.select();
+    } catch (e) {
+      setErr('Lỗi xác thực: ' + e.message);
+    } finally {
+      setChecking(false);
     }
   };
 
@@ -380,8 +432,8 @@ function LoginGate({ onSuccess }) {
               )}
             </div>
 
-            <button type="submit" className="btn-primary w-full flex items-center justify-center gap-2">
-              <IconSparkles size={16}/> Truy cập Dashboard
+            <button type="submit" disabled={checking} className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-60">
+              {checking ? <><IconRefresh size={16} className="animate-spin"/> Đang xác thực...</> : <><IconSparkles size={16}/> Truy cập Dashboard</>}
             </button>
           </form>
 
@@ -422,6 +474,7 @@ function DashboardMain({ onLogout }) {
   const [dateTo, setDateTo] = useState('');
   const [dateRangePreset, setDateRangePreset] = useState('this_month');
   const [dailyTablePage, setDailyTablePage] = useState(0);
+  const [chartMetric, setChartMetric] = useState('dthu'); // dthu, don, sp, traffic, atv, upt, crv
 
   useEffect(() => {
     const sample = generateSampleData().map(normalizeRow);
@@ -556,6 +609,7 @@ function DashboardMain({ onLogout }) {
 
   // Daily aggregate cho biểu đồ và bảng chi tiết
   const dailyAggregate = useMemo(() => {
+    // Aggregate kỳ hiện tại
     const map = new Map();
     filtered.forEach(r => {
       const key = r.date.toISOString().slice(0,10);
@@ -565,6 +619,16 @@ function DashboardMain({ onLogout }) {
       e.dthuT += r.dthuT; e.donT += r.donT; e.spT += r.spT; e.trafficT += r.trafficT;
       e.count += 1;
     });
+
+    // Aggregate cùng kỳ tháng trước theo từng ngày
+    const prevMap = new Map();
+    filteredPrev.forEach(r => {
+      const key = r.date.toISOString().slice(0,10);
+      if (!prevMap.has(key)) prevMap.set(key, { dthuA:0, donA:0, spA:0, trafficA:0 });
+      const e = prevMap.get(key);
+      e.dthuA += r.dthuA; e.donA += r.donA; e.spA += r.spA; e.trafficA += r.trafficA;
+    });
+
     return [...map.values()].sort((a,b) => b.date - a.date).map(e => {
       const atvA = e.donA ? e.dthuA/e.donA : 0;
       const atvT = e.donT ? e.dthuT/e.donT : 0;
@@ -572,9 +636,40 @@ function DashboardMain({ onLogout }) {
       const uptT = e.donT ? e.spT/e.donT : 0;
       const crvA = e.trafficA ? (e.donA/e.trafficA)*100 : 0;
       const crvT = e.trafficT ? (e.donT/e.trafficT)*100 : 0;
-      return { ...e, atvA, atvT, uptA, uptT, crvA, crvT };
+
+      // Tìm cùng kỳ: cùng ngày trong tháng, lùi 1 tháng
+      const prevDate = new Date(e.date);
+      prevDate.setMonth(prevDate.getMonth() - 1);
+      const prevKey = prevDate.toISOString().slice(0,10);
+      const prev = prevMap.get(prevKey) || { dthuA:0, donA:0, spA:0, trafficA:0 };
+      const prevAtvA = prev.donA ? prev.dthuA/prev.donA : 0;
+      const prevUptA = prev.donA ? prev.spA/prev.donA : 0;
+      const prevCrvA = prev.trafficA ? (prev.donA/prev.trafficA)*100 : 0;
+
+      return {
+        ...e, atvA, atvT, uptA, uptT, crvA, crvT,
+        // Cùng kỳ
+        prev_dthuA: prev.dthuA, prev_donA: prev.donA, prev_spA: prev.spA, prev_trafficA: prev.trafficA,
+        prev_atvA: prevAtvA, prev_uptA: prevUptA, prev_crvA: prevCrvA,
+        // Tỷ lệ đạt (% MT)
+        pct_dthu: e.dthuT ? (e.dthuA/e.dthuT)*100 : null,
+        pct_don: e.donT ? (e.donA/e.donT)*100 : null,
+        pct_sp: e.spT ? (e.spA/e.spT)*100 : null,
+        pct_traffic: e.trafficT ? (e.trafficA/e.trafficT)*100 : null,
+        pct_atv: atvT ? (atvA/atvT)*100 : null,
+        pct_upt: uptT ? (uptA/uptT)*100 : null,
+        pct_crv: crvT ? (crvA/crvT)*100 : null,
+        // So với cùng kỳ (% chênh lệch)
+        ck_dthu: pctChange(e.dthuA, prev.dthuA),
+        ck_don: pctChange(e.donA, prev.donA),
+        ck_sp: pctChange(e.spA, prev.spA),
+        ck_traffic: pctChange(e.trafficA, prev.trafficA),
+        ck_atv: pctChange(atvA, prevAtvA),
+        ck_upt: pctChange(uptA, prevUptA),
+        ck_crv: pctChange(crvA, prevCrvA),
+      };
     });
-  }, [filtered]);
+  }, [filtered, filteredPrev]);
 
   const dailySeries = useMemo(() => [...dailyAggregate].reverse().map(e => ({ ...e, label: formatDateKey(e.date) })), [dailyAggregate]);
 
@@ -765,40 +860,33 @@ function DashboardMain({ onLogout }) {
         </section>
 
         <section className="surface-elevated p-7 fadeup" style={{animationDelay:'200ms'}}>
-          <div className="mb-5 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{background:'#fdeef4'}}><IconChart size={15} className="text-pink-400"/></div>
-            <div>
-              <h2 className="display-font text-lg font-bold text-slate-800">Xu hướng theo ngày</h2>
-              <p className="text-xs text-slate-500 mt-0.5">Đường liền: Thực đạt • Đường đứt: Mục tiêu</p>
+          <div className="mb-5 flex items-start justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{background:'#fdeef4'}}><IconChart size={15} className="text-pink-400"/></div>
+              <div>
+                <h2 className="display-font text-lg font-bold text-slate-800">Xu hướng theo ngày</h2>
+                <p className="text-xs text-slate-500 mt-0.5">Đường liền: Thực đạt • Đường đứt: Mục tiêu</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {[
+                {k:'dthu', l:'Doanh thu'},
+                {k:'don', l:'Đơn hàng'},
+                {k:'sp', l:'Sản phẩm'},
+                {k:'traffic', l:'Traffic'},
+                {k:'atv', l:'ATV'},
+                {k:'upt', l:'UPT'},
+                {k:'crv', l:'CRV'},
+              ].map(m => (
+                <button key={m.k} onClick={() => setChartMetric(m.k)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${chartMetric === m.k ? 'text-white shadow-md' : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200/60'}`}
+                  style={chartMetric === m.k ? {background:'linear-gradient(135deg, #5b8def, #b89cf0)'} : {}}>
+                  {m.l}
+                </button>
+              ))}
             </div>
           </div>
-          <div style={{width:'100%',height:340}}>
-            <ResponsiveContainer>
-              <AreaChart data={dailySeries} margin={{top:10,right:30,left:0,bottom:0}}>
-                <defs>
-                  <linearGradient id="gDthu" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#93b6f5" stopOpacity={0.35}/>
-                    <stop offset="100%" stopColor="#93b6f5" stopOpacity={0}/>
-                  </linearGradient>
-                  <linearGradient id="gDon" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#ed9ebe" stopOpacity={0.3}/>
-                    <stop offset="100%" stopColor="#ed9ebe" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 6" stroke="rgba(15,23,42,0.05)" vertical={false}/>
-                <XAxis dataKey="label" stroke="#94a3b8" fontSize={11} axisLine={false} tickLine={false} dy={8}/>
-                <YAxis yAxisId="left" stroke="#94a3b8" fontSize={11} tickFormatter={formatCurrency} axisLine={false} tickLine={false}/>
-                <YAxis yAxisId="right" orientation="right" stroke="#94a3b8" fontSize={11} axisLine={false} tickLine={false}/>
-                <Tooltip contentStyle={{borderRadius:14,border:'1px solid rgba(15,23,42,0.06)',fontSize:12,boxShadow:'0 8px 24px rgba(15,23,42,0.08)',background:'rgba(255,255,255,0.95)',backdropFilter:'blur(8px)'}}
-                  formatter={(v,n) => n.indexOf('DTHU') >= 0 ? formatCurrency(v) : formatNumber(v)}/>
-                <Legend wrapperStyle={{fontSize:12, paddingTop:12}} iconType="circle"/>
-                <Area yAxisId="left" type="monotone" dataKey="dthuA" name="DTHU thực đạt" stroke="#5b8def" strokeWidth={2.5} fill="url(#gDthu)" dot={false} activeDot={{r:5, fill:'#5b8def', strokeWidth:0}}/>
-                <Line yAxisId="left" type="monotone" dataKey="dthuT" name="DTHU mục tiêu" stroke="#5b8def" strokeWidth={1.5} strokeDasharray="4 4" dot={false}/>
-                <Area yAxisId="right" type="monotone" dataKey="donA" name="Đơn thực đạt" stroke="#ed9ebe" strokeWidth={2.5} fill="url(#gDon)" dot={false} activeDot={{r:5, fill:'#ed9ebe', strokeWidth:0}}/>
-                <Line yAxisId="right" type="monotone" dataKey="donT" name="Đơn mục tiêu" stroke="#ed9ebe" strokeWidth={1.5} strokeDasharray="4 4" dot={false}/>
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+          <ChartView data={dailySeries} metric={chartMetric}/>
         </section>
 
         {/* DAILY DETAIL TABLE */}
@@ -824,46 +912,60 @@ function DashboardMain({ onLogout }) {
               <thead>
                 <tr className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
                   <th rowSpan="2" className="text-left py-3 px-3 sticky left-0 bg-white">Ngày</th>
-                  <th colSpan="2" className="text-center py-3 px-2 border-l border-slate-100" style={{color:'#5b8def'}}>Doanh thu</th>
-                  <th colSpan="2" className="text-center py-3 px-2 border-l border-slate-100" style={{color:'#ed9ebe'}}>Đơn hàng</th>
-                  <th colSpan="2" className="text-center py-3 px-2 border-l border-slate-100" style={{color:'#b89cf0'}}>Sản phẩm</th>
-                  <th colSpan="2" className="text-center py-3 px-2 border-l border-slate-100" style={{color:'#d4a849'}}>Traffic</th>
-                  <th colSpan="2" className="text-center py-3 px-2 border-l border-slate-100" style={{color:'#6dc88a'}}>ATV</th>
-                  <th colSpan="2" className="text-center py-3 px-2 border-l border-slate-100" style={{color:'#5b8def'}}>UPT</th>
-                  <th colSpan="2" className="text-center py-3 px-2 border-l border-slate-100" style={{color:'#e57878'}}>CRV (%)</th>
+                  <th colSpan="3" className="text-center py-3 px-2 border-l border-slate-100" style={{color:'#5b8def'}}>Doanh thu</th>
+                  <th colSpan="3" className="text-center py-3 px-2 border-l border-slate-100" style={{color:'#ed9ebe'}}>Đơn hàng</th>
+                  <th colSpan="3" className="text-center py-3 px-2 border-l border-slate-100" style={{color:'#b89cf0'}}>Sản phẩm</th>
+                  <th colSpan="3" className="text-center py-3 px-2 border-l border-slate-100" style={{color:'#d4a849'}}>Traffic</th>
+                  <th colSpan="3" className="text-center py-3 px-2 border-l border-slate-100" style={{color:'#6dc88a'}}>ATV</th>
+                  <th colSpan="3" className="text-center py-3 px-2 border-l border-slate-100" style={{color:'#5b8def'}}>UPT</th>
+                  <th colSpan="3" className="text-center py-3 px-2 border-l border-slate-100" style={{color:'#e57878'}}>CRV (%)</th>
                 </tr>
                 <tr className="text-[10px] text-slate-400 font-medium border-b border-slate-200">
-                  <th className="text-right py-2 px-2 border-l border-slate-100">Đạt</th><th className="text-right py-2 px-2">MT</th>
-                  <th className="text-right py-2 px-2 border-l border-slate-100">Đạt</th><th className="text-right py-2 px-2">MT</th>
-                  <th className="text-right py-2 px-2 border-l border-slate-100">Đạt</th><th className="text-right py-2 px-2">MT</th>
-                  <th className="text-right py-2 px-2 border-l border-slate-100">Đạt</th><th className="text-right py-2 px-2">MT</th>
-                  <th className="text-right py-2 px-2 border-l border-slate-100">Đạt</th><th className="text-right py-2 px-2">MT</th>
-                  <th className="text-right py-2 px-2 border-l border-slate-100">Đạt</th><th className="text-right py-2 px-2">MT</th>
-                  <th className="text-right py-2 px-2 border-l border-slate-100">Đạt</th><th className="text-right py-2 px-2">MT</th>
+                  <th className="text-right py-2 px-2 border-l border-slate-100">Đạt</th><th className="text-right py-2 px-2">MT</th><th className="text-right py-2 px-2">%MT</th>
+                  <th className="text-right py-2 px-2 border-l border-slate-100">Đạt</th><th className="text-right py-2 px-2">MT</th><th className="text-right py-2 px-2">%MT</th>
+                  <th className="text-right py-2 px-2 border-l border-slate-100">Đạt</th><th className="text-right py-2 px-2">MT</th><th className="text-right py-2 px-2">%MT</th>
+                  <th className="text-right py-2 px-2 border-l border-slate-100">Đạt</th><th className="text-right py-2 px-2">MT</th><th className="text-right py-2 px-2">%MT</th>
+                  <th className="text-right py-2 px-2 border-l border-slate-100">Đạt</th><th className="text-right py-2 px-2">MT</th><th className="text-right py-2 px-2">%MT</th>
+                  <th className="text-right py-2 px-2 border-l border-slate-100">Đạt</th><th className="text-right py-2 px-2">MT</th><th className="text-right py-2 px-2">%MT</th>
+                  <th className="text-right py-2 px-2 border-l border-slate-100">Đạt</th><th className="text-right py-2 px-2">MT</th><th className="text-right py-2 px-2">%MT</th>
                 </tr>
               </thead>
               <tbody>
                 {dailyPageData.map((d) => (
                   <tr key={d.date.toISOString()} className="border-b border-slate-50 hover:bg-slate-50/40 transition">
                     <td className="py-2.5 px-3 font-semibold text-slate-700 sticky left-0 bg-white whitespace-nowrap">{formatDateFull(d.date)}</td>
+                    {/* DOANH THU */}
                     <td className="py-2.5 px-2 text-right ticker border-l border-slate-100 font-medium text-slate-800">{formatCurrency(d.dthuA)}</td>
                     <td className="py-2.5 px-2 text-right ticker text-slate-400">{formatCurrency(d.dthuT)}</td>
+                    <td className="py-2.5 px-2 text-right ticker"><PctCell v={d.pct_dthu}/></td>
+                    {/* ĐƠN HÀNG */}
                     <td className="py-2.5 px-2 text-right ticker border-l border-slate-100 font-medium text-slate-800">{formatNumber(d.donA)}</td>
                     <td className="py-2.5 px-2 text-right ticker text-slate-400">{formatNumber(d.donT)}</td>
+                    <td className="py-2.5 px-2 text-right ticker"><PctCell v={d.pct_don}/></td>
+                    {/* SẢN PHẨM */}
                     <td className="py-2.5 px-2 text-right ticker border-l border-slate-100 font-medium text-slate-800">{formatNumber(d.spA)}</td>
                     <td className="py-2.5 px-2 text-right ticker text-slate-400">{formatNumber(d.spT)}</td>
+                    <td className="py-2.5 px-2 text-right ticker"><PctCell v={d.pct_sp}/></td>
+                    {/* TRAFFIC */}
                     <td className="py-2.5 px-2 text-right ticker border-l border-slate-100 font-medium text-slate-800">{formatNumber(d.trafficA)}</td>
                     <td className="py-2.5 px-2 text-right ticker text-slate-400">{formatNumber(d.trafficT)}</td>
+                    <td className="py-2.5 px-2 text-right ticker"><PctCell v={d.pct_traffic}/></td>
+                    {/* ATV */}
                     <td className="py-2.5 px-2 text-right ticker border-l border-slate-100 font-medium text-slate-800">{formatCurrency(d.atvA)}</td>
                     <td className="py-2.5 px-2 text-right ticker text-slate-400">{formatCurrency(d.atvT)}</td>
+                    <td className="py-2.5 px-2 text-right ticker"><PctCell v={d.pct_atv}/></td>
+                    {/* UPT */}
                     <td className="py-2.5 px-2 text-right ticker border-l border-slate-100 font-medium text-slate-800">{formatNumber(d.uptA,2)}</td>
                     <td className="py-2.5 px-2 text-right ticker text-slate-400">{formatNumber(d.uptT,2)}</td>
+                    <td className="py-2.5 px-2 text-right ticker"><PctCell v={d.pct_upt}/></td>
+                    {/* CRV */}
                     <td className="py-2.5 px-2 text-right ticker border-l border-slate-100 font-medium text-slate-800">{formatNumber(d.crvA,2)}</td>
                     <td className="py-2.5 px-2 text-right ticker text-slate-400">{formatNumber(d.crvT,2)}</td>
+                    <td className="py-2.5 px-2 text-right ticker"><PctCell v={d.pct_crv}/></td>
                   </tr>
                 ))}
                 {dailyAggregate.length === 0 && (
-                  <tr><td colSpan="15" className="text-center py-12 text-slate-400">Không có dữ liệu trong khoảng ngày này</td></tr>
+                  <tr><td colSpan="22" className="text-center py-12 text-slate-400">Không có dữ liệu trong khoảng ngày này</td></tr>
                 )}
               </tbody>
             </table>
@@ -918,7 +1020,22 @@ function DashboardMain({ onLogout }) {
                         <span className="text-[11px] text-slate-500 font-mono">{info.cond}</span>
                         <span className="ml-auto pill" style={{background:'rgba(255,255,255,0.7)', color:info.color}}>{stores.length} chi nhánh</span>
                       </div>
-                      <p className="text-sm text-slate-600 mt-2 leading-relaxed"><span className="font-semibold text-slate-700">Khuyến nghị:</span> {info.action}</p>
+                      <p className="text-sm text-slate-600 mt-2 leading-relaxed"><span className="font-semibold text-slate-700">Khuyến nghị vận hành:</span> {info.action}</p>
+                      <div className="mt-3 pt-3 border-t border-white/60 space-y-2">
+                        <p className="text-xs font-bold uppercase tracking-wider mb-1.5" style={{color:info.color}}>📣 Kế hoạch Marketing</p>
+                        <div className="text-sm text-slate-600 leading-relaxed">
+                          <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-bold mr-1.5 align-middle" style={{background:'rgba(91,141,239,0.12)', color:'#4076d6'}}>TRADE</span>
+                          {info.trade}
+                        </div>
+                        <div className="text-sm text-slate-600 leading-relaxed">
+                          <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-bold mr-1.5 align-middle" style={{background:'rgba(184,156,240,0.15)', color:'#8a6dd1'}}>DIGITAL</span>
+                          {info.digital}
+                        </div>
+                        <div className="text-sm text-slate-600 leading-relaxed">
+                          <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-bold mr-1.5 align-middle" style={{background:'rgba(237,158,190,0.18)', color:'#c45a82'}}>CONTENT</span>
+                          {info.content}
+                        </div>
+                      </div>
                     </div>
                   </div>
                   <div className="bg-white overflow-x-auto">
@@ -956,6 +1073,68 @@ function DashboardMain({ onLogout }) {
           <span className="shimmer-text font-semibold">GUMAC Dashboard</span> • Phân tích thông minh • Cập nhật real-time theo nguồn dữ liệu
         </footer>
       </div>
+    </div>
+  );
+}
+
+function PctCell({ v }) {
+  if (v == null) return <span className="text-slate-300">—</span>;
+  const color = v >= 100 ? '#6dc88a' : v >= 80 ? '#d4a849' : '#e57878';
+  return <span className="font-semibold" style={{color}}>{v.toFixed(0)}%</span>;
+}
+
+function MiniDelta({ v }) {
+  if (v == null) return <span className="text-slate-300 text-[10px]">—</span>;
+  const up = v > 0, down = v < 0;
+  const color = up ? '#6dc88a' : down ? '#e57878' : '#94a3b8';
+  return (
+    <span className="inline-flex items-center gap-0.5 ticker font-semibold text-[10px]" style={{color}}>
+      {up ? '▲' : down ? '▼' : '—'} {Math.abs(v).toFixed(0)}%
+    </span>
+  );
+}
+
+function ChartView({ data, metric }) {
+  const config = {
+    dthu:    { label:'Doanh thu', color:'#5b8def', isCurrency:true,  isPct:false },
+    don:     { label:'Đơn hàng',  color:'#ed9ebe', isCurrency:false, isPct:false },
+    sp:      { label:'Sản phẩm',  color:'#b89cf0', isCurrency:false, isPct:false },
+    traffic: { label:'Traffic',   color:'#d4a849', isCurrency:false, isPct:false },
+    atv:     { label:'ATV',       color:'#6dc88a', isCurrency:true,  isPct:false },
+    upt:     { label:'UPT',       color:'#5b8def', isCurrency:false, isPct:false },
+    crv:     { label:'CRV',       color:'#e57878', isCurrency:false, isPct:true  },
+  }[metric] || {};
+  const keyA = metric + 'A';
+  const keyT = metric + 'T';
+  const formatVal = (v) => {
+    if (v == null) return '';
+    if (config.isCurrency) return formatCurrency(v);
+    if (config.isPct) return formatNumber(v, 2) + '%';
+    if (metric === 'upt') return formatNumber(v, 2);
+    return formatNumber(v);
+  };
+  const gradId = `gMetric_${metric}`;
+  return (
+    <div style={{width:'100%',height:340}}>
+      <ResponsiveContainer>
+        <ComposedChart data={data} margin={{top:10,right:30,left:0,bottom:0}}>
+          <defs>
+            <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={config.color} stopOpacity={0.35}/>
+              <stop offset="100%" stopColor={config.color} stopOpacity={0}/>
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 6" stroke="rgba(15,23,42,0.05)" vertical={false}/>
+          <XAxis dataKey="label" stroke="#94a3b8" fontSize={11} axisLine={false} tickLine={false} dy={8}/>
+          <YAxis stroke="#94a3b8" fontSize={11} tickFormatter={formatVal} axisLine={false} tickLine={false} width={70}/>
+          <Tooltip
+            contentStyle={{borderRadius:14,border:'1px solid rgba(15,23,42,0.06)',fontSize:12,boxShadow:'0 8px 24px rgba(15,23,42,0.08)',background:'rgba(255,255,255,0.95)',backdropFilter:'blur(8px)'}}
+            formatter={(v) => formatVal(v)}/>
+          <Legend wrapperStyle={{fontSize:12, paddingTop:12}} iconType="circle"/>
+          <Area type="monotone" dataKey={keyA} name={`${config.label} thực đạt`} stroke={config.color} strokeWidth={2.5} fill={`url(#${gradId})`} dot={false} activeDot={{r:5, fill:config.color, strokeWidth:0}}/>
+          <Line type="monotone" dataKey={keyT} name={`${config.label} mục tiêu`} stroke={config.color} strokeWidth={2} strokeDasharray="6 4" dot={false} legendType="line"/>
+        </ComposedChart>
+      </ResponsiveContainer>
     </div>
   );
 }
